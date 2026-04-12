@@ -1,0 +1,6 @@
+[
+    {
+        "merged": "com.thepanel.app-debug-80:/xml_device_admin_receiver.xml.flat",
+        "source": "com.thepanel.app-main-82:/xml/device_admin_receiver.xml"
+    }
+]
