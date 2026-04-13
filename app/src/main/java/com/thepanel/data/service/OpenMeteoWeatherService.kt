@@ -2,6 +2,7 @@ package com.thepanel.data.service
 
 import com.thepanel.data.local.PanelDao
 import com.thepanel.data.local.WeatherCacheEntity
+import com.thepanel.data.model.HourlyForecast
 import com.thepanel.data.model.WeatherState
 import com.thepanel.data.util.formatFeelsLike
 import com.thepanel.data.util.formatHumidity
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 
 class OpenMeteoWeatherService(
@@ -27,6 +29,23 @@ class OpenMeteoWeatherService(
             if (cache == null) {
                 WeatherState()
             } else {
+                val hourlyList = mutableListOf<HourlyForecast>()
+                runCatching {
+                    cache.hourlyJson?.let {
+                        val array = JSONArray(it)
+                        for (i in 0 until array.length()) {
+                            val obj = array.getJSONObject(i)
+                            hourlyList.add(
+                                HourlyForecast(
+                                    time = obj.getString("time"),
+                                    temperature = obj.getString("temp"),
+                                    weatherCode = obj.getInt("code")
+                                )
+                            )
+                        }
+                    }
+                }
+
                 WeatherState(
                     available = true,
                     summary = weatherSummaryFromCode(cache.weatherCode),
@@ -37,7 +56,8 @@ class OpenMeteoWeatherService(
                     sunrise = formatIsoTime(cache.sunriseIso),
                     sunset = formatIsoTime(cache.sunsetIso),
                     updatedAt = formatUpdatedAt(cache.fetchedAtEpochMs),
-                    offlineCached = true
+                    offlineCached = true,
+                    hourly = hourlyList
                 )
             }
         }
@@ -45,7 +65,7 @@ class OpenMeteoWeatherService(
 
     override suspend fun refreshForecast(latitude: Double, longitude: Double): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val url = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=sunrise,sunset&timezone=auto&forecast_days=1"
+            val url = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=sunrise,sunset&hourly=temperature_2m,weather_code&timezone=auto&forecast_days=1"
             val request = Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
                 check(response.isSuccessful) { "Hava verisi alÄ±namadÄ±: ${response.code}" }
@@ -53,6 +73,26 @@ class OpenMeteoWeatherService(
                 val json = JSONObject(body)
                 val current = json.getJSONObject("current")
                 val daily = json.getJSONObject("daily")
+                val hourly = json.getJSONObject("hourly")
+
+                val times = hourly.getJSONArray("time")
+                val temps = hourly.getJSONArray("temperature_2m")
+                val codes = hourly.getJSONArray("weather_code")
+
+                val hourlyJsonArray = JSONArray()
+                val now = System.currentTimeMillis()
+                for (i in 0 until times.length()) {
+                    val timeStr = times.getString(i)
+                    // Simplified: just take every 3 hours to save space, or just first 8 entries
+                    if (i % 3 == 0) {
+                        val obj = JSONObject()
+                        obj.put("time", formatIsoTime(timeStr))
+                        obj.put("temp", formatTemperature(temps.getDouble(i)))
+                        obj.put("code", codes.getInt(i))
+                        hourlyJsonArray.put(obj)
+                    }
+                }
+
                 val entity = WeatherCacheEntity(
                     latitude = latitude,
                     longitude = longitude,
@@ -64,7 +104,8 @@ class OpenMeteoWeatherService(
                     sunriseIso = daily.getJSONArray("sunrise").optString(0),
                     sunsetIso = daily.getJSONArray("sunset").optString(0),
                     fetchedAtEpochMs = System.currentTimeMillis(),
-                    weatherCode = current.getInt("weather_code")
+                    weatherCode = current.getInt("weather_code"),
+                    hourlyJson = hourlyJsonArray.toString()
                 )
                 dao.upsertWeatherCache(entity)
             }

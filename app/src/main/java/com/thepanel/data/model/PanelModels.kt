@@ -37,7 +37,14 @@ data class WeatherState(
     val updatedAt: String = "HenÃ¼z senkron yok",
     val offlineCached: Boolean = false,
     val error: String? = null,
-    val accent: Color = AccentSky
+    val accent: Color = AccentSky,
+    val hourly: List<HourlyForecast> = emptyList()
+)
+
+data class HourlyForecast(
+    val time: String,
+    val temperature: String,
+    val weatherCode: Int
 )
 
 data class LocationState(
@@ -107,6 +114,8 @@ data class SystemState(
 data class AdminSettings(
     val adminPin: String = "2468",
     val kioskMode: Boolean = false,
+    val isLightTheme: Boolean = false,
+    val biometricEnabled: Boolean = false,
     val weatherRefreshMinutes: Int = 30,
     val locationRefreshSeconds: Int = 5,
     val useOfflineWeatherCache: Boolean = true,

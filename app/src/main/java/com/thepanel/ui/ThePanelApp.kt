@@ -3,6 +3,7 @@ package com.thepanel.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thepanel.ui.theme.ThePanelTheme
 
 @Composable
 fun ThePanelApp(
@@ -12,24 +13,28 @@ fun ThePanelApp(
     val settings by viewModel.settingsState.collectAsStateWithLifecycle()
     val nextAlarm by viewModel.nextAlarmLabel.collectAsStateWithLifecycle()
 
-    DashboardRoute(
-        panelState = panelState,
-        settings = settings,
-        nextAlarm = nextAlarm,
-        onVerifyPin = viewModel::verifyPin,
-        onToggleKiosk = viewModel::toggleKioskMode,
-        onUpdateWeatherRefresh = viewModel::updateWeatherRefresh,
-        onUpdateLocationRefresh = viewModel::updateLocationRefresh,
-        onToggleOfflineWeather = viewModel::toggleOfflineWeather,
-        onUpdatePin = viewModel::updatePin,
-        onUpdateQuickLaunch = viewModel::updateQuickLaunch,
-        onLaunchApp = viewModel::launchApp,
-        onPlayPauseMedia = viewModel::playPauseMedia,
-        onMediaNext = viewModel::mediaNext,
-        onMediaPrevious = viewModel::mediaPrevious,
-        onLaunchAssistant = viewModel::launchAssistant,
-        onRefreshWeather = viewModel::refreshWeatherNow,
-        onAddAlarm = viewModel::addAlarm,
-        onToggleAlarm = viewModel::toggleAlarm
-    )
+    ThePanelTheme(useDarkTheme = !settings.isLightTheme) {
+        DashboardRoute(
+            panelState = panelState,
+            settings = settings,
+            nextAlarm = nextAlarm,
+            onVerifyPin = viewModel::verifyPin,
+            onToggleKiosk = viewModel::toggleKioskMode,
+            onUpdateWeatherRefresh = viewModel::updateWeatherRefresh,
+            onUpdateLocationRefresh = viewModel::updateLocationRefresh,
+            onToggleOfflineWeather = viewModel::toggleOfflineWeather,
+            onToggleLightTheme = viewModel::toggleLightTheme,
+            onToggleBiometric = viewModel::toggleBiometric,
+            onUpdatePin = viewModel::updatePin,
+            onUpdateQuickLaunch = viewModel::updateQuickLaunch,
+            onLaunchApp = viewModel::launchApp,
+            onPlayPauseMedia = viewModel::playPauseMedia,
+            onMediaNext = viewModel::mediaNext,
+            onMediaPrevious = viewModel::mediaPrevious,
+            onLaunchAssistant = viewModel::launchAssistant,
+            onRefreshWeather = viewModel::refreshWeatherNow,
+            onAddAlarm = viewModel::addAlarm,
+            onToggleAlarm = viewModel::toggleAlarm
+        )
+    }
 }

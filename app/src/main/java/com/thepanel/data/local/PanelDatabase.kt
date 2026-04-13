@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [AlarmEntity::class, WeatherCacheEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class PanelDatabase : RoomDatabase() {
@@ -19,7 +19,7 @@ abstract class PanelDatabase : RoomDatabase() {
                 context,
                 PanelDatabase::class.java,
                 "the-panel.db"
-            ).build()
+            ).fallbackToDestructiveMigration().build()
         }
     }
 }

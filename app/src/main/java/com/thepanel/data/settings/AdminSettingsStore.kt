@@ -24,6 +24,8 @@ class AdminSettingsStore(
             AdminSettings(
                 adminPin = prefs[PIN] ?: "2468",
                 kioskMode = prefs[KIOSK] ?: false,
+                isLightTheme = prefs[IS_LIGHT_THEME] ?: false,
+                biometricEnabled = prefs[BIOMETRIC_ENABLED] ?: false,
                 weatherRefreshMinutes = prefs[WEATHER_REFRESH_MINUTES] ?: 30,
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
@@ -37,6 +39,8 @@ class AdminSettingsStore(
             val current = AdminSettings(
                 adminPin = prefs[PIN] ?: "2468",
                 kioskMode = prefs[KIOSK] ?: false,
+                isLightTheme = prefs[IS_LIGHT_THEME] ?: false,
+                biometricEnabled = prefs[BIOMETRIC_ENABLED] ?: false,
                 weatherRefreshMinutes = prefs[WEATHER_REFRESH_MINUTES] ?: 30,
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
@@ -45,6 +49,8 @@ class AdminSettingsStore(
             val updated = transform(current)
             prefs[PIN] = updated.adminPin
             prefs[KIOSK] = updated.kioskMode
+            prefs[IS_LIGHT_THEME] = updated.isLightTheme
+            prefs[BIOMETRIC_ENABLED] = updated.biometricEnabled
             prefs[WEATHER_REFRESH_MINUTES] = updated.weatherRefreshMinutes
             prefs[LOCATION_REFRESH_SECONDS] = updated.locationRefreshSeconds
             prefs[USE_OFFLINE_CACHE] = updated.useOfflineWeatherCache
@@ -67,6 +73,8 @@ class AdminSettingsStore(
     private companion object {
         val PIN = stringPreferencesKey("pin")
         val KIOSK = booleanPreferencesKey("kiosk")
+        val IS_LIGHT_THEME = booleanPreferencesKey("is_light_theme")
+        val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val WEATHER_REFRESH_MINUTES = intPreferencesKey("weather_refresh_minutes")
         val LOCATION_REFRESH_SECONDS = intPreferencesKey("location_refresh_seconds")
         val USE_OFFLINE_CACHE = booleanPreferencesKey("use_offline_cache")

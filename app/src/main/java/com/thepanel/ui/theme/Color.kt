@@ -12,3 +12,11 @@ val AccentSun = Color(0xFFFFC14D)
 val AccentDanger = Color(0xFFFF6F61)
 val TextPrimary = Color(0xFFF4F7FB)
 val TextMuted = Color(0xFF9EB0C5)
+
+// Light Theme
+val LightBackgroundStart = Color(0xFFF0F4F8)
+val LightBackgroundEnd = Color(0xFFE1E8F0)
+val LightSurfacePrimary = Color(0xFFFFFFFF)
+val LightSurfaceSecondary = Color(0xFFF8FAFC)
+val LightTextPrimary = Color(0xFF1E293B)
+val LightTextMuted = Color(0xFF64748B)

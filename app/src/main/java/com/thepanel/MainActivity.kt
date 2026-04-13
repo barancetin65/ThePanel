@@ -5,17 +5,16 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.thepanel.ui.ThePanelApp
-import com.thepanel.ui.theme.ThePanelTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -36,9 +35,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (permissions.isNotEmpty()) permissionLauncher.launch(permissions.toTypedArray())
             }
-            ThePanelTheme {
-                ThePanelApp()
-            }
+            ThePanelApp()
         }
     }
 

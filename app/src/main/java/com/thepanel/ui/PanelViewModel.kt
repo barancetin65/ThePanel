@@ -57,6 +57,18 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleLightTheme() {
+        viewModelScope.launch {
+            repository.updateSettings { it.copy(isLightTheme = !it.isLightTheme) }
+        }
+    }
+
+    fun toggleBiometric() {
+        viewModelScope.launch {
+            repository.updateSettings { it.copy(biometricEnabled = !it.biometricEnabled) }
+        }
+    }
+
     fun updateQuickLaunch(slot: Int, label: String, packageName: String) {
         viewModelScope.launch {
             repository.updateSettings { settings ->

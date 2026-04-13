@@ -65,18 +65,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricPrompt
+import androidx.compose.ui.platform.LocalContext
 import com.thepanel.data.model.AdminSettings
+import com.thepanel.data.model.HourlyForecast
 import com.thepanel.data.model.PanelState
 import com.thepanel.data.model.QuickLaunchConfig
 import com.thepanel.data.model.QuickLaunchItem
-import com.thepanel.ui.theme.AccentDanger
-import com.thepanel.ui.theme.AccentMint
-import com.thepanel.ui.theme.AccentSky
-import com.thepanel.ui.theme.BackgroundEnd
-import com.thepanel.ui.theme.BackgroundStart
-import com.thepanel.ui.theme.SurfacePrimary
-import com.thepanel.ui.theme.SurfaceSecondary
-import com.thepanel.ui.theme.TextMuted
+import com.thepanel.ui.theme.*
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -89,6 +86,8 @@ fun DashboardRoute(
     onUpdateWeatherRefresh: (Int) -> Unit,
     onUpdateLocationRefresh: (Int) -> Unit,
     onToggleOfflineWeather: () -> Unit,
+    onToggleLightTheme: () -> Unit,
+    onToggleBiometric: () -> Unit,
     onUpdatePin: (String) -> Unit,
     onUpdateQuickLaunch: (Int, String, String) -> Unit,
     onLaunchApp: (String) -> Unit,
@@ -105,10 +104,13 @@ fun DashboardRoute(
     var pinInput by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf<String?>(null) }
 
+    val bgStart = if (settings.isLightTheme) com.thepanel.ui.theme.LightBackgroundStart else com.thepanel.ui.theme.BackgroundStart
+    val bgEnd = if (settings.isLightTheme) com.thepanel.ui.theme.LightBackgroundEnd else com.thepanel.ui.theme.BackgroundEnd
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.linearGradient(listOf(BackgroundStart, BackgroundEnd)))
+            .background(Brush.linearGradient(listOf(bgStart, bgEnd)))
             .padding(24.dp)
     ) {
         Row(
@@ -155,6 +157,7 @@ fun DashboardRoute(
                     adminUnlocked = onVerifyPin(pinInput)
                     if (!adminUnlocked) pinError = "PIN hatali"
                 },
+                onBiometricSuccess = { adminUnlocked = true },
                 onClose = {
                     adminSheetVisible = false
                     adminUnlocked = false
@@ -165,6 +168,8 @@ fun DashboardRoute(
                 onUpdateWeatherRefresh = onUpdateWeatherRefresh,
                 onUpdateLocationRefresh = onUpdateLocationRefresh,
                 onToggleOfflineWeather = onToggleOfflineWeather,
+                onToggleLightTheme = onToggleLightTheme,
+                onToggleBiometric = onToggleBiometric,
                 onUpdatePin = onUpdatePin,
                 onUpdateQuickLaunch = onUpdateQuickLaunch,
                 onAddAlarm = onAddAlarm
@@ -182,16 +187,16 @@ private fun HeroClockCard(panelState: PanelState, nextAlarm: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(panelState.clock.dateLabel, color = TextMuted, fontSize = 18.sp)
+                Text(panelState.clock.dateLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 18.sp)
                 Text(panelState.clock.time, fontSize = 72.sp, fontWeight = FontWeight.Bold)
-                Text(panelState.clock.timezoneLabel, color = TextMuted)
+                Text(panelState.clock.timezoneLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Pill("Sonraki alarm", AccentSky)
                 Text(nextAlarm, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
                 Text(
                     if (panelState.system.kioskEnabled) "Kiosk etkin" else "Kiosk pasif",
-                    color = TextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -201,32 +206,57 @@ private fun HeroClockCard(panelState: PanelState, nextAlarm: String) {
 @Composable
 private fun WeatherCard(panelState: PanelState, onRefreshWeather: () -> Unit) {
     PanelCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                CardTitle(Icons.Rounded.Cloud, "Hava Durumu")
-                Text(panelState.weather.temperature, fontSize = 54.sp, fontWeight = FontWeight.Bold)
-                Text(panelState.weather.summary, fontSize = 22.sp)
-                if (panelState.weather.feelsLike.isNotBlank()) Text(panelState.weather.feelsLike, color = TextMuted)
-                Text(panelState.weather.updatedAt, color = TextMuted)
-                panelState.weather.error?.let { Text(it, color = AccentDanger) }
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CardTitle(Icons.Rounded.Cloud, "Hava Durumu")
+                    Text(panelState.weather.temperature, fontSize = 54.sp, fontWeight = FontWeight.Bold)
+                    Text(panelState.weather.summary, fontSize = 22.sp)
+                    if (panelState.weather.feelsLike.isNotBlank()) Text(panelState.weather.feelsLike, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(panelState.weather.updatedAt, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    panelState.weather.error?.let { Text(it, color = AccentDanger) }
+                }
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatLine("Ruzgar", panelState.weather.wind.ifBlank { "-" })
+                    StatLine("Nem", panelState.weather.humidity.ifBlank { "-" })
+                    StatLine("Gundogumu", panelState.weather.sunrise.ifBlank { "-" })
+                    StatLine("Gunbatimi", panelState.weather.sunset.ifBlank { "-" })
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Pill(if (panelState.weather.offlineCached) "Offline cache" else "Canli", panelState.weather.accent)
+                        IconButton(onClick = onRefreshWeather) {
+                            Icon(Icons.Rounded.Refresh, contentDescription = "Yenile", tint = AccentSky)
+                        }
+                    }
+                }
             }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatLine("Ruzgar", panelState.weather.wind.ifBlank { "-" })
-                StatLine("Nem", panelState.weather.humidity.ifBlank { "-" })
-                StatLine("Gundogumu", panelState.weather.sunrise.ifBlank { "-" })
-                StatLine("Gunbatimi", panelState.weather.sunset.ifBlank { "-" })
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Pill(if (panelState.weather.offlineCached) "Offline cache" else "Canli", panelState.weather.accent)
-                    IconButton(onClick = onRefreshWeather) {
-                        Icon(Icons.Rounded.Refresh, contentDescription = "Yenile", tint = AccentSky)
+
+            if (panelState.weather.hourly.isNotEmpty()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    panelState.weather.hourly.take(6).forEach { hourly ->
+                        HourlyWeatherItem(hourly)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HourlyWeatherItem(hourly: HourlyForecast) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(hourly.time, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(hourly.temperature, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
 }
 
@@ -245,16 +275,16 @@ private fun LocationCard(panelState: PanelState) {
                         fontSize = 26.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Text(panelState.location.country.ifBlank { "Ulke bilgisi yok" }, color = TextMuted)
-                    Text("Lat ${panelState.location.latitude}", color = TextMuted)
-                    Text("Lon ${panelState.location.longitude}", color = TextMuted)
+                    Text(panelState.location.country.ifBlank { "Ulke bilgisi yok" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Lat ${panelState.location.latitude}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Lon ${panelState.location.longitude}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     panelState.location.error?.let { Text(it, color = AccentDanger) }
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(panelState.location.speed, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = AccentMint)
-                    Text(panelState.location.heading.ifBlank { "-" }, color = TextMuted)
-                    Text(panelState.location.accuracy.ifBlank { "-" }, color = TextMuted)
-                    Text(panelState.location.altitude.ifBlank { "-" }, color = TextMuted)
+                    Text(panelState.location.heading.ifBlank { "-" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(panelState.location.accuracy.ifBlank { "-" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(panelState.location.altitude.ifBlank { "-" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -273,11 +303,11 @@ private fun PermissionsCard(panelState: PanelState) {
                 } else {
                     "Spotify ve YouTube kontrolu icin bildirim erisimi verin"
                 },
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 if (panelState.permissions.exactAlarmReady) "Exact alarm hazir" else "Exact alarm izni gerekli",
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -310,8 +340,8 @@ private fun MediaCard(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CardTitle(Icons.Rounded.PlayCircle, "Medya Merkezi")
             Text(panelState.media.title, color = if (panelState.media.permissionRequired) AccentDanger else MaterialTheme.colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-            if (panelState.media.subtitle.isNotBlank()) Text(panelState.media.subtitle, color = TextMuted)
-            if (panelState.media.source.isNotBlank()) Text(panelState.media.source, color = TextMuted)
+            if (panelState.media.subtitle.isNotBlank()) Text(panelState.media.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (panelState.media.source.isNotBlank()) Text(panelState.media.source, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 MediaAction(Icons.Rounded.SkipPrevious, onMediaPrevious)
                 MediaAction(if (panelState.media.playing) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle, onPlayPauseMedia)
@@ -341,7 +371,7 @@ private fun QuickLaunchCard(items: List<QuickLaunchItem>, onLaunchApp: (String) 
                     ) {
                         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
                             Text(item.label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
-                            Text(if (item.installed) item.packageName else "Uygulama yok", color = TextMuted, fontSize = 12.sp)
+                            Text(if (item.installed) item.packageName else "Uygulama yok", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                         }
                     }
                 }
@@ -356,7 +386,7 @@ private fun AlarmCard(panelState: PanelState, onToggleAlarm: (Long, Boolean) -> 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CardTitle(Icons.Rounded.Alarm, "Alarmlar")
             if (panelState.alarms.isEmpty()) {
-                Text("Henuz alarm yok", color = TextMuted)
+                Text("Henuz alarm yok", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             panelState.alarms.forEach { alarm ->
                 Row(
@@ -366,7 +396,7 @@ private fun AlarmCard(panelState: PanelState, onToggleAlarm: (Long, Boolean) -> 
                 ) {
                     Column {
                         Text(alarm.title, fontWeight = FontWeight.SemiBold)
-                        Text(alarm.repeatLabel, color = TextMuted)
+                        Text(alarm.repeatLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(alarm.time, fontWeight = FontWeight.Bold)
@@ -374,7 +404,7 @@ private fun AlarmCard(panelState: PanelState, onToggleAlarm: (Long, Boolean) -> 
                         Switch(checked = alarm.enabled, onCheckedChange = { onToggleAlarm(alarm.id, it) })
                     }
                 }
-                HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
             }
         }
     }
@@ -386,14 +416,14 @@ private fun SystemCard(panelState: PanelState) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             CardTitle(Icons.Rounded.Assistant, "Sistem")
             Text(if (panelState.system.assistantAvailable) "Assistant hazir" else "Assistant erisilemiyor", fontWeight = FontWeight.SemiBold)
-            Text(panelState.connectivity.lastSeenOnline.ifBlank { "Baglanti durumu izleniyor" }, color = TextMuted)
+            Text(panelState.connectivity.lastSeenOnline.ifBlank { "Baglanti durumu izleniyor" }, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
 private fun FloatingSettingsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Surface(modifier = modifier, color = SurfaceSecondary, shadowElevation = 14.dp, shape = CircleShape) {
+    Surface(modifier = modifier, color = MaterialTheme.colorScheme.surfaceVariant, shadowElevation = 14.dp, shape = CircleShape) {
         IconButton(onClick = onClick, modifier = Modifier.size(68.dp)) {
             Icon(Icons.Rounded.Settings, contentDescription = "Ayarlar", tint = AccentSky)
         }
@@ -408,15 +438,36 @@ private fun AdminPanel(
     pinError: String?,
     onPinChange: (String) -> Unit,
     onUnlock: () -> Unit,
+    onBiometricSuccess: () -> Unit,
     onClose: () -> Unit,
     onToggleKiosk: () -> Unit,
     onUpdateWeatherRefresh: (Int) -> Unit,
     onUpdateLocationRefresh: (Int) -> Unit,
     onToggleOfflineWeather: () -> Unit,
+    onToggleLightTheme: () -> Unit,
+    onToggleBiometric: () -> Unit,
     onUpdatePin: (String) -> Unit,
     onUpdateQuickLaunch: (Int, String, String) -> Unit,
     onAddAlarm: (String, Int, Int, Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val biometricPrompt = remember {
+        val executor = androidx.core.content.ContextCompat.getMainExecutor(context)
+        BiometricPrompt(context as FragmentActivity, executor, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                onBiometricSuccess()
+            }
+        })
+    }
+
+    val promptInfo = remember {
+        BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Admin Panel Girisi")
+            .setSubtitle("Biometrik verinizi kullanin")
+            .setNegativeButtonText("Iptal")
+            .build()
+    }
+
     var weatherRefresh by remember(settings.weatherRefreshMinutes) { mutableStateOf(settings.weatherRefreshMinutes.toString()) }
     var locationRefresh by remember(settings.locationRefreshSeconds) { mutableStateOf(settings.locationRefreshSeconds.toString()) }
     var newPin by remember { mutableStateOf("") }
@@ -445,7 +496,7 @@ private fun AdminPanel(
             }
 
             if (!unlocked) {
-                Text("Kiosk ve kritik ayarlar icin PIN gerekli.", color = TextMuted)
+                Text("Kiosk ve kritik ayarlar icin PIN gerekli.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = pinInput,
                     onValueChange = onPinChange,
@@ -455,10 +506,26 @@ private fun AdminPanel(
                 )
                 if (pinError != null) Text(pinError, color = AccentDanger)
                 Button(onClick = onUnlock, modifier = Modifier.fillMaxWidth()) { Text("Panele Gir") }
+                if (settings.biometricEnabled) {
+                    ElevatedButton(
+                        onClick = { biometricPrompt.authenticate(promptInfo) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Parmak Izi ile Gir")
+                    }
+                }
             } else {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Kiosk modu")
                     Switch(checked = settings.kioskMode, onCheckedChange = { onToggleKiosk() })
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Acik tema")
+                    Switch(checked = settings.isLightTheme, onCheckedChange = { onToggleLightTheme() })
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Biyometrik kilit")
+                    Switch(checked = settings.biometricEnabled, onCheckedChange = { onToggleBiometric() })
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Offline hava cache")
@@ -564,7 +631,7 @@ private fun QuickLaunchEditor(config: QuickLaunchConfig, onChanged: (QuickLaunch
 private fun PanelCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = SurfacePrimary.copy(alpha = 0.92f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)),
         shape = RoundedCornerShape(28.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
@@ -575,18 +642,18 @@ private fun PanelCard(modifier: Modifier = Modifier, content: @Composable Column
 private fun CardTitle(icon: ImageVector, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(icon, contentDescription = null, tint = AccentSky)
-        Text(title, color = TextMuted, fontWeight = FontWeight.SemiBold)
+        Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
 private fun CompactStatusCard(icon: ImageVector, title: String, value: String, subtitle: String) {
-    Surface(color = SurfaceSecondary.copy(alpha = 0.95f), shape = RoundedCornerShape(22.dp), modifier = Modifier.width(180.dp)) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f), shape = RoundedCornerShape(22.dp), modifier = Modifier.width(180.dp)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(icon, contentDescription = null, tint = AccentSky)
-            Text(title, color = TextMuted)
+            Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(subtitle, color = TextMuted, fontSize = 13.sp)
+            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         }
     }
 }
@@ -594,7 +661,7 @@ private fun CompactStatusCard(icon: ImageVector, title: String, value: String, s
 @Composable
 private fun StatLine(label: String, value: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = TextMuted)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -613,7 +680,7 @@ private fun Pill(text: String, color: Color) {
 
 @Composable
 private fun MediaAction(icon: ImageVector, onClick: () -> Unit) {
-    Surface(color = SurfaceSecondary, shape = CircleShape) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = CircleShape) {
         IconButton(onClick = onClick) {
             Icon(icon, contentDescription = null)
         }

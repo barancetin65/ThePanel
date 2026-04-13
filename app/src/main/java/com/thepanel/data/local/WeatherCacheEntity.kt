@@ -16,5 +16,6 @@ data class WeatherCacheEntity(
     val sunriseIso: String,
     val sunsetIso: String,
     val fetchedAtEpochMs: Long,
-    val weatherCode: Int
+    val weatherCode: Int,
+    val hourlyJson: String? = null
 )
