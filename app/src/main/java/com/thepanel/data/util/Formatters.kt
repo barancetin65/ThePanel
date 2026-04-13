@@ -10,11 +10,18 @@ import kotlin.math.roundToInt
 
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale("tr"))
 private val dateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", Locale("tr"))
+private val dayFormatter = DateTimeFormatter.ofPattern("EEEE", Locale("tr"))
 private val coordinateFormatter = DecimalFormat("0.000000")
 
 fun nowTimeLabel(zoneId: ZoneId): String = LocalDateTime.now(zoneId).format(timeFormatter)
 
 fun nowDateLabel(zoneId: ZoneId): String = LocalDateTime.now(zoneId).format(dateFormatter)
+
+fun formatDayOfWeek(isoDate: String): String {
+    return runCatching {
+        java.time.LocalDate.parse(isoDate).format(dayFormatter)
+    }.getOrDefault("")
+}
 
 fun formatClockZone(zoneId: ZoneId): String = zoneId.id
 

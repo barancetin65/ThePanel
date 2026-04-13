@@ -27,6 +27,7 @@ class AdminSettingsStore(
                 weatherRefreshMinutes = prefs[WEATHER_REFRESH_MINUTES] ?: 30,
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
+                useLightTheme = prefs[LIGHT_THEME] ?: false,
                 quickLaunchSlots = decodeSlots(prefs[QUICK_LAUNCH_SLOTS])
             )
         }
@@ -40,6 +41,7 @@ class AdminSettingsStore(
                 weatherRefreshMinutes = prefs[WEATHER_REFRESH_MINUTES] ?: 30,
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
+                useLightTheme = prefs[LIGHT_THEME] ?: false,
                 quickLaunchSlots = decodeSlots(prefs[QUICK_LAUNCH_SLOTS])
             )
             val updated = transform(current)
@@ -48,6 +50,7 @@ class AdminSettingsStore(
             prefs[WEATHER_REFRESH_MINUTES] = updated.weatherRefreshMinutes
             prefs[LOCATION_REFRESH_SECONDS] = updated.locationRefreshSeconds
             prefs[USE_OFFLINE_CACHE] = updated.useOfflineWeatherCache
+            prefs[LIGHT_THEME] = updated.useLightTheme
             prefs[QUICK_LAUNCH_SLOTS] = json.encodeToString(updated.quickLaunchSlots)
         }
     }
@@ -70,6 +73,7 @@ class AdminSettingsStore(
         val WEATHER_REFRESH_MINUTES = intPreferencesKey("weather_refresh_minutes")
         val LOCATION_REFRESH_SECONDS = intPreferencesKey("location_refresh_seconds")
         val USE_OFFLINE_CACHE = booleanPreferencesKey("use_offline_cache")
+        val LIGHT_THEME = booleanPreferencesKey("light_theme")
         val QUICK_LAUNCH_SLOTS = stringPreferencesKey("quick_launch_slots")
     }
 }

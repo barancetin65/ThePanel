@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.thepanel.ThePanelApplication
 import com.thepanel.data.model.AdminSettings
+import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.PanelState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,8 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
     val nextAlarmLabel: StateFlow<String> = panelState
         .map { state -> state.alarms.firstOrNull { it.enabled }?.let { "${it.title} Â· ${it.time}" } ?: "Alarm yok" }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Alarm yok")
+
+    private var _cachedApps = emptyList<AppInfo>()
 
     fun verifyPin(pin: String): Boolean = repository.verifyPin(pin, settingsState.value)
 
@@ -57,6 +60,12 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleLightTheme() {
+        viewModelScope.launch {
+            repository.updateSettings { it.copy(useLightTheme = !it.useLightTheme) }
+        }
+    }
+
     fun updateQuickLaunch(slot: Int, label: String, packageName: String) {
         viewModelScope.launch {
             repository.updateSettings { settings ->
@@ -72,6 +81,17 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
     fun launchApp(packageName: String) {
         if (packageName.isBlank()) return
         repository.launchApp(packageName)
+    }
+
+    fun getInstalledApps(): List<AppInfo> {
+        if (_cachedApps.isEmpty()) {
+            _cachedApps = repository.getInstalledApps()
+        }
+        return _cachedApps
+    }
+
+    fun refreshAppsCache() {
+        _cachedApps = repository.getInstalledApps()
     }
 
     fun playPauseMedia() {

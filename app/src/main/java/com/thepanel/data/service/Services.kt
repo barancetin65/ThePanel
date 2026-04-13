@@ -1,6 +1,7 @@
 package com.thepanel.data.service
 
 import com.thepanel.data.local.AlarmEntity
+import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.BatteryState
 import com.thepanel.data.model.ConnectivityState
 import com.thepanel.data.model.LocationState
@@ -38,6 +39,7 @@ interface AppLauncherService {
     fun launch(packageName: String): Boolean
     fun isInstalled(packageName: String): Boolean
     fun appLabel(packageName: String): String?
+    fun getInstalledApps(): List<AppInfo>
 }
 
 interface KioskService {

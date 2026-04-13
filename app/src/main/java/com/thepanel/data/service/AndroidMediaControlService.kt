@@ -16,8 +16,19 @@ class AndroidMediaControlService(
 ) : MediaControlService {
     private val mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
     private val stateFlow = MutableStateFlow(currentState())
+    private var lastController: MediaController? = null
+
+    private val sessionCallback = object : MediaController.Callback() {
+        override fun onPlaybackStateChanged(state: android.media.session.PlaybackState?) {
+            stateFlow.value = currentState()
+        }
+        override fun onMetadataChanged(metadata: android.media.MediaMetadata?) {
+            stateFlow.value = currentState()
+        }
+    }
+
     private val listener = MediaSessionManager.OnActiveSessionsChangedListener {
-        stateFlow.value = currentState()
+        updateController()
     }
 
     init {
@@ -26,6 +37,17 @@ class AndroidMediaControlService(
                 listener,
                 ComponentName(context, PanelNotificationListenerService::class.java)
             )
+            updateController()
+        }
+    }
+
+    private fun updateController() {
+        val controller = currentController()
+        if (controller != lastController) {
+            lastController?.unregisterCallback(sessionCallback)
+            lastController = controller
+            lastController?.registerCallback(sessionCallback)
+            stateFlow.value = currentState()
         }
     }
 

@@ -2,6 +2,8 @@ package com.thepanel.data.service
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import com.thepanel.data.model.AppInfo
 
 class AndroidAppLauncherService(
     private val context: Context
@@ -22,5 +24,18 @@ class AndroidAppLauncherService(
             val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
             context.packageManager.getApplicationLabel(appInfo).toString()
         }.getOrNull()
+    }
+
+    override fun getInstalledApps(): List<AppInfo> {
+        val pm = context.packageManager
+        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+        val resolveInfos = pm.queryIntentActivities(mainIntent, 0)
+        return resolveInfos.map {
+            AppInfo(
+                label = it.loadLabel(pm).toString(),
+                packageName = it.activityInfo.packageName,
+                isSystem = (it.activityInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+            )
+        }.distinctBy { it.packageName }.sortedBy { it.label }
     }
 }

@@ -37,7 +37,16 @@ data class WeatherState(
     val updatedAt: String = "HenÃ¼z senkron yok",
     val offlineCached: Boolean = false,
     val error: String? = null,
-    val accent: Color = AccentSky
+    val accent: Color = AccentSky,
+    val forecasts: List<ForecastDay> = emptyList()
+)
+
+data class ForecastDay(
+    val day: String,
+    val tempMax: String,
+    val tempMin: String,
+    val condition: String,
+    val weatherCode: Int
 )
 
 data class LocationState(
@@ -110,6 +119,7 @@ data class AdminSettings(
     val weatherRefreshMinutes: Int = 30,
     val locationRefreshSeconds: Int = 5,
     val useOfflineWeatherCache: Boolean = true,
+    val useLightTheme: Boolean = false,
     val quickLaunchSlots: List<QuickLaunchConfig> = List(4) { index ->
         QuickLaunchConfig(slot = index, label = "", packageName = "")
     }
@@ -126,6 +136,12 @@ data class PermissionState(
     val hasLocationPermission: Boolean = false,
     val notificationListenerEnabled: Boolean = false,
     val exactAlarmReady: Boolean = false
+)
+
+data class AppInfo(
+    val label: String,
+    val packageName: String,
+    val isSystem: Boolean
 )
 
 enum class PanelStatusColor(val color: Color) {

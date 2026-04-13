@@ -5,6 +5,7 @@ import com.thepanel.data.local.AlarmEntity
 import com.thepanel.data.local.PanelDao
 import com.thepanel.data.model.AdminSettings
 import com.thepanel.data.model.AlarmItem
+import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.ClockState
 import com.thepanel.data.model.LocationState
 import com.thepanel.data.model.PanelState
@@ -148,6 +149,8 @@ class PanelRepository(
     fun verifyPin(pin: String, current: AdminSettings): Boolean = pin == current.adminPin
 
     fun launchApp(packageName: String): Boolean = appLauncherService.launch(packageName)
+
+    fun getInstalledApps(): List<AppInfo> = appLauncherService.getInstalledApps()
 
     suspend fun playPauseMedia() = mediaControlService.playPause()
 

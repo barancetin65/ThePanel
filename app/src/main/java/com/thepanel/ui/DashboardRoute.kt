@@ -1,6 +1,9 @@
 package com.thepanel.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,21 +13,33 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Assistant
 import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MyLocation
@@ -40,6 +55,8 @@ import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,10 +79,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.thepanel.data.model.AdminSettings
+import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.PanelState
 import com.thepanel.data.model.QuickLaunchConfig
 import com.thepanel.data.model.QuickLaunchItem
@@ -98,17 +122,23 @@ fun DashboardRoute(
     onLaunchAssistant: () -> Unit,
     onRefreshWeather: () -> Unit,
     onAddAlarm: (String, Int, Int, Boolean) -> Unit,
-    onToggleAlarm: (Long, Boolean) -> Unit
+    onToggleAlarm: (Long, Boolean) -> Unit,
+    onToggleLightTheme: () -> Unit,
+    getInstalledApps: () -> List<AppInfo>
 ) {
     var adminSheetVisible by remember { mutableStateOf(false) }
     var adminUnlocked by remember { mutableStateOf(false) }
     var pinInput by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf<String?>(null) }
+    var allAppsVisible by remember { mutableStateOf(false) }
+
+    val bgStart = if (settings.useLightTheme) Color(0xFFE3F2FD) else BackgroundStart
+    val bgEnd = if (settings.useLightTheme) Color(0xFFBBDEFB) else BackgroundEnd
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.linearGradient(listOf(BackgroundStart, BackgroundEnd)))
+            .background(Brush.linearGradient(listOf(bgStart, bgEnd)))
             .padding(24.dp)
     ) {
         Row(
@@ -130,7 +160,7 @@ fun DashboardRoute(
             ) {
                 StatusStrip(panelState)
                 MediaCard(panelState, onPlayPauseMedia, onMediaPrevious, onMediaNext, onLaunchAssistant)
-                QuickLaunchCard(panelState.quickLaunchItems, onLaunchApp)
+                QuickLaunchCard(panelState.quickLaunchItems, onLaunchApp, onOpenAllApps = { allAppsVisible = true })
                 AlarmCard(panelState, onToggleAlarm)
                 SystemCard(panelState)
             }
@@ -141,7 +171,12 @@ fun DashboardRoute(
             onClick = { adminSheetVisible = true }
         )
 
-        AnimatedVisibility(adminSheetVisible, modifier = Modifier.align(Alignment.CenterEnd)) {
+        AnimatedVisibility(
+            visible = adminSheetVisible,
+            enter = fadeIn(tween(300)),
+            exit = fadeOut(tween(300)),
+            modifier = Modifier.fillMaxSize()
+        ) {
             AdminPanel(
                 settings = settings,
                 unlocked = adminUnlocked,
@@ -167,7 +202,20 @@ fun DashboardRoute(
                 onToggleOfflineWeather = onToggleOfflineWeather,
                 onUpdatePin = onUpdatePin,
                 onUpdateQuickLaunch = onUpdateQuickLaunch,
-                onAddAlarm = onAddAlarm
+                onAddAlarm = onAddAlarm,
+                onToggleLightTheme = onToggleLightTheme,
+                getInstalledApps = getInstalledApps
+            )
+        }
+
+        if (allAppsVisible) {
+            AllAppsDialog(
+                apps = getInstalledApps(),
+                onLaunchApp = {
+                    onLaunchApp(it)
+                    allAppsVisible = false
+                },
+                onClose = { allAppsVisible = false }
             )
         }
     }
@@ -183,7 +231,12 @@ private fun HeroClockCard(panelState: PanelState, nextAlarm: String) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(panelState.clock.dateLabel, color = TextMuted, fontSize = 18.sp)
-                Text(panelState.clock.time, fontSize = 72.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    panelState.clock.time,
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { contentDescription = "Su anki saat ${panelState.clock.time}" }
+                )
                 Text(panelState.clock.timezoneLabel, color = TextMuted)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -201,28 +254,46 @@ private fun HeroClockCard(panelState: PanelState, nextAlarm: String) {
 @Composable
 private fun WeatherCard(panelState: PanelState, onRefreshWeather: () -> Unit) {
     PanelCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                CardTitle(Icons.Rounded.Cloud, "Hava Durumu")
-                Text(panelState.weather.temperature, fontSize = 54.sp, fontWeight = FontWeight.Bold)
-                Text(panelState.weather.summary, fontSize = 22.sp)
-                if (panelState.weather.feelsLike.isNotBlank()) Text(panelState.weather.feelsLike, color = TextMuted)
-                Text(panelState.weather.updatedAt, color = TextMuted)
-                panelState.weather.error?.let { Text(it, color = AccentDanger) }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CardTitle(Icons.Rounded.Cloud, "Hava Durumu")
+                    Text(panelState.weather.temperature, fontSize = 54.sp, fontWeight = FontWeight.Bold)
+                    Text(panelState.weather.summary, fontSize = 22.sp)
+                    if (panelState.weather.feelsLike.isNotBlank()) Text(panelState.weather.feelsLike, color = TextMuted)
+                    Text(panelState.weather.updatedAt, color = TextMuted)
+                    panelState.weather.error?.let { Text(it, color = AccentDanger) }
+                }
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatLine("Ruzgar", panelState.weather.wind.ifBlank { "-" })
+                    StatLine("Nem", panelState.weather.humidity.ifBlank { "-" })
+                    StatLine("Gundogumu", panelState.weather.sunrise.ifBlank { "-" })
+                    StatLine("Gunbatimi", panelState.weather.sunset.ifBlank { "-" })
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Pill(if (panelState.weather.offlineCached) "Offline cache" else "Canli", panelState.weather.accent)
+                        IconButton(onClick = onRefreshWeather) {
+                            Icon(Icons.Rounded.Refresh, contentDescription = "Hava durumunu yenile", tint = AccentSky)
+                        }
+                    }
+                }
             }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatLine("Ruzgar", panelState.weather.wind.ifBlank { "-" })
-                StatLine("Nem", panelState.weather.humidity.ifBlank { "-" })
-                StatLine("Gundogumu", panelState.weather.sunrise.ifBlank { "-" })
-                StatLine("Gunbatimi", panelState.weather.sunset.ifBlank { "-" })
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Pill(if (panelState.weather.offlineCached) "Offline cache" else "Canli", panelState.weather.accent)
-                    IconButton(onClick = onRefreshWeather) {
-                        Icon(Icons.Rounded.Refresh, contentDescription = "Yenile", tint = AccentSky)
+            
+            if (panelState.weather.forecasts.isNotEmpty()) {
+                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    panelState.weather.forecasts.take(5).forEach { forecast ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(forecast.day.take(3), fontSize = 14.sp, color = TextMuted)
+                            Text(forecast.tempMax, fontWeight = FontWeight.Bold)
+                            Text(forecast.tempMin, fontSize = 12.sp, color = TextMuted)
+                        }
                     }
                 }
             }
@@ -246,15 +317,13 @@ private fun LocationCard(panelState: PanelState) {
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(panelState.location.country.ifBlank { "Ulke bilgisi yok" }, color = TextMuted)
-                    Text("Lat ${panelState.location.latitude}", color = TextMuted)
-                    Text("Lon ${panelState.location.longitude}", color = TextMuted)
+                    Text("Lat ${panelState.location.latitude} Â· Lon ${panelState.location.longitude}", color = TextMuted, fontSize = 14.sp)
                     panelState.location.error?.let { Text(it, color = AccentDanger) }
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(panelState.location.speed, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = AccentMint)
                     Text(panelState.location.heading.ifBlank { "-" }, color = TextMuted)
                     Text(panelState.location.accuracy.ifBlank { "-" }, color = TextMuted)
-                    Text(panelState.location.altitude.ifBlank { "-" }, color = TextMuted)
                 }
             }
         }
@@ -266,21 +335,25 @@ private fun PermissionsCard(panelState: PanelState) {
     PanelCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             CardTitle(Icons.Rounded.Assistant, "Hazirlik")
-            Text(if (panelState.permissions.hasLocationPermission) "Konum izni hazir" else "Konum izni gerekli")
-            Text(
-                if (panelState.permissions.notificationListenerEnabled) {
-                    "Medya kontrolu hazir"
-                } else {
-                    "Spotify ve YouTube kontrolu icin bildirim erisimi verin"
-                },
-                color = TextMuted
-            )
-            Text(
-                if (panelState.permissions.exactAlarmReady) "Exact alarm hazir" else "Exact alarm izni gerekli",
-                color = TextMuted
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatusIndicator(panelState.permissions.hasLocationPermission)
+                Text("Konum izni")
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatusIndicator(panelState.permissions.notificationListenerEnabled)
+                Text("Medya erisimi")
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatusIndicator(panelState.permissions.exactAlarmReady)
+                Text("Alarm izni")
+            }
         }
     }
+}
+
+@Composable
+private fun StatusIndicator(active: Boolean) {
+    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(if (active) AccentMint else AccentDanger))
 }
 
 @Composable
@@ -309,16 +382,31 @@ private fun MediaCard(
     PanelCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CardTitle(Icons.Rounded.PlayCircle, "Medya Merkezi")
-            Text(panelState.media.title, color = if (panelState.media.permissionRequired) AccentDanger else MaterialTheme.colorScheme.onSurface, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-            if (panelState.media.subtitle.isNotBlank()) Text(panelState.media.subtitle, color = TextMuted)
-            if (panelState.media.source.isNotBlank()) Text(panelState.media.source, color = TextMuted)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                MediaAction(Icons.Rounded.SkipPrevious, onMediaPrevious)
-                MediaAction(if (panelState.media.playing) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle, onPlayPauseMedia)
-                MediaAction(Icons.Rounded.SkipNext, onMediaNext)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)).background(SurfaceSecondary)) {
+                    Icon(Icons.Rounded.PlayCircle, contentDescription = null, modifier = Modifier.align(Alignment.Center).size(32.dp), tint = TextMuted)
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(panelState.media.title, color = if (panelState.media.permissionRequired) AccentDanger else MaterialTheme.colorScheme.onSurface, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (panelState.media.subtitle.isNotBlank()) Text(panelState.media.subtitle, color = TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (panelState.media.source.isNotBlank()) Text(panelState.media.source, color = AccentSky, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ElevatedButton(onClick = onLaunchAssistant) { Text("Assistant") }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MediaAction(Icons.Rounded.SkipPrevious, "Onceki", onMediaPrevious)
+                    MediaAction(if (panelState.media.playing) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle, if (panelState.media.playing) "Duraklat" else "Oynat", onPlayPauseMedia)
+                    MediaAction(Icons.Rounded.SkipNext, "Sonraki", onMediaNext)
+                }
+                ElevatedButton(onClick = onLaunchAssistant) {
+                    Icon(Icons.Rounded.Assistant, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Asistan")
+                }
             }
         }
     }
@@ -326,10 +414,17 @@ private fun MediaCard(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun QuickLaunchCard(items: List<QuickLaunchItem>, onLaunchApp: (String) -> Unit) {
+private fun QuickLaunchCard(items: List<QuickLaunchItem>, onLaunchApp: (String) -> Unit, onOpenAllApps: () -> Unit) {
     PanelCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CardTitle(Icons.Rounded.Map, "Hizli Baslat")
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                CardTitle(Icons.Rounded.Map, "Hizli Baslat")
+                TextButton(onClick = onOpenAllApps) {
+                    Icon(Icons.Rounded.Apps, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("TUM UYGULAMALAR")
+                }
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items.forEach { item ->
                     Surface(
@@ -369,7 +464,7 @@ private fun AlarmCard(panelState: PanelState, onToggleAlarm: (Long, Boolean) -> 
                         Text(alarm.repeatLabel, color = TextMuted)
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(alarm.time, fontWeight = FontWeight.Bold)
+                        Text(alarm.time, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                         Spacer(Modifier.width(12.dp))
                         Switch(checked = alarm.enabled, onCheckedChange = { onToggleAlarm(alarm.id, it) })
                     }
@@ -385,7 +480,7 @@ private fun SystemCard(panelState: PanelState) {
     PanelCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             CardTitle(Icons.Rounded.Assistant, "Sistem")
-            Text(if (panelState.system.assistantAvailable) "Assistant hazir" else "Assistant erisilemiyor", fontWeight = FontWeight.SemiBold)
+            Text(if (panelState.system.assistantAvailable) "Asistan hazir" else "Asistan erisilemiyor", fontWeight = FontWeight.SemiBold)
             Text(panelState.connectivity.lastSeenOnline.ifBlank { "Baglanti durumu izleniyor" }, color = TextMuted)
         }
     }
@@ -415,7 +510,9 @@ private fun AdminPanel(
     onToggleOfflineWeather: () -> Unit,
     onUpdatePin: (String) -> Unit,
     onUpdateQuickLaunch: (Int, String, String) -> Unit,
-    onAddAlarm: (String, Int, Int, Boolean) -> Unit
+    onAddAlarm: (String, Int, Int, Boolean) -> Unit,
+    onToggleLightTheme: () -> Unit,
+    getInstalledApps: () -> List<AppInfo>
 ) {
     var weatherRefresh by remember(settings.weatherRefreshMinutes) { mutableStateOf(settings.weatherRefreshMinutes.toString()) }
     var locationRefresh by remember(settings.locationRefreshSeconds) { mutableStateOf(settings.locationRefreshSeconds.toString()) }
@@ -426,108 +523,157 @@ private fun AdminPanel(
     var repeatDaily by remember { mutableStateOf(true) }
     val slotLabels = remember(settings.quickLaunchSlots) { mutableStateListOf(*settings.quickLaunchSlots.toTypedArray()) }
 
-    PanelCard(
+    Box(
         modifier = Modifier
-            .width(500.dp)
-            .padding(start = 24.dp)
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.98f))
+            .clickable(enabled = false) {} // Consume clicks
     ) {
         Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Admin Panel", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                TextButton(onClick = onClose) { Text("Kapat") }
+                Text("Yonetim Paneli", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Kapat", modifier = Modifier.size(32.dp))
+                }
             }
 
             if (!unlocked) {
-                Text("Kiosk ve kritik ayarlar icin PIN gerekli.", color = TextMuted)
-                OutlinedTextField(
-                    value = pinInput,
-                    onValueChange = onPinChange,
-                    label = { Text("Admin PIN") },
-                    isError = pinError != null,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (pinError != null) Text(pinError, color = AccentDanger)
-                Button(onClick = onUnlock, modifier = Modifier.fillMaxWidth()) { Text("Panele Gir") }
-            } else {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Kiosk modu")
-                    Switch(checked = settings.kioskMode, onCheckedChange = { onToggleKiosk() })
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Offline hava cache")
-                    Switch(checked = settings.useOfflineWeatherCache, onCheckedChange = { onToggleOfflineWeather() })
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = weatherRefresh,
-                        onValueChange = {
-                            weatherRefresh = it.filter(Char::isDigit)
-                            weatherRefresh.toIntOrNull()?.let(onUpdateWeatherRefresh)
-                        },
-                        label = { Text("Hava dk") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = locationRefresh,
-                        onValueChange = {
-                            locationRefresh = it.filter(Char::isDigit)
-                            locationRefresh.toIntOrNull()?.let(onUpdateLocationRefresh)
-                        },
-                        label = { Text("Konum sn") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                OutlinedTextField(
-                    value = newPin,
-                    onValueChange = { newPin = it.filter(Char::isDigit).take(6) },
-                    label = { Text("Yeni admin PIN") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                ElevatedButton(onClick = { if (newPin.length >= 4) onUpdatePin(newPin) }) {
-                    Text("PIN Guncelle")
-                }
-
-                Text("Hizli baslat slotlari", fontWeight = FontWeight.SemiBold)
-                slotLabels.forEachIndexed { index, config ->
-                    QuickLaunchEditor(
-                        config = config,
-                        onChanged = { updated ->
-                            slotLabels[index] = updated
-                            onUpdateQuickLaunch(updated.slot, updated.label, updated.packageName)
-                        }
-                    )
-                }
-
-                Text("Yeni alarm", fontWeight = FontWeight.SemiBold)
-                OutlinedTextField(value = alarmTitle, onValueChange = { alarmTitle = it }, label = { Text("Baslik") }, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = alarmHour, onValueChange = { alarmHour = it.filter(Char::isDigit).take(2) }, label = { Text("Saat") }, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = alarmMinute, onValueChange = { alarmMinute = it.filter(Char::isDigit).take(2) }, label = { Text("Dakika") }, modifier = Modifier.weight(1f))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Her gun tekrar")
-                    Switch(checked = repeatDaily, onCheckedChange = { repeatDaily = it })
-                }
-                ElevatedButton(
-                    onClick = {
-                        val hour = alarmHour.toIntOrNull()
-                        val minute = alarmMinute.toIntOrNull()
-                        if (alarmTitle.isNotBlank() && hour != null && minute != null && hour in 0..23 && minute in 0..59) {
-                            onAddAlarm(alarmTitle, hour, minute, repeatDaily)
-                            alarmTitle = ""
-                            alarmHour = ""
-                            alarmMinute = ""
+                Column(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Kritik ayarlar icin PIN gerekli.", color = TextMuted, fontSize = 20.sp)
+                    Spacer(Modifier.height(24.dp))
+                    
+                    Text(pinInput.map { "*" }.joinToString(" "), fontSize = 48.sp, fontWeight = FontWeight.Bold, letterSpacing = 8.sp)
+                    if (pinError != null) Text(pinError, color = AccentDanger)
+                    
+                    Spacer(Modifier.height(32.dp))
+                    
+                    // Simple PIN Keyboard
+                    val numbers = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK")
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier.width(300.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(numbers) { num ->
+                            Surface(
+                                onClick = {
+                                    when (num) {
+                                        "C" -> onPinChange("")
+                                        "OK" -> onUnlock()
+                                        else -> if (pinInput.length < 6) onPinChange(pinInput + num)
+                                    }
+                                },
+                                shape = CircleShape,
+                                color = SurfaceSecondary,
+                                modifier = Modifier.size(80.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(num, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
                         }
                     }
-                ) {
-                    Text("Alarm Ekle")
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    // Left Column
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        AdminSection("Genel Ayarlar") {
+                            AdminToggle("Kiosk Modu", settings.kioskMode, onToggleKiosk)
+                            AdminToggle("Acik Tema", settings.useLightTheme, onToggleLightTheme)
+                            AdminToggle("Offline Hava Durumu", settings.useOfflineWeatherCache, onToggleOfflineWeather)
+                            
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                OutlinedTextField(
+                                    value = weatherRefresh,
+                                    onValueChange = {
+                                        weatherRefresh = it.filter(Char::isDigit)
+                                        weatherRefresh.toIntOrNull()?.let(onUpdateWeatherRefresh)
+                                    },
+                                    label = { Text("Hava Yenileme (dk)") },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = locationRefresh,
+                                    onValueChange = {
+                                        locationRefresh = it.filter(Char::isDigit)
+                                        locationRefresh.toIntOrNull()?.let(onUpdateLocationRefresh)
+                                    },
+                                    label = { Text("Konum Yenileme (sn)") },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        AdminSection("Guvenlik") {
+                            OutlinedTextField(
+                                value = newPin,
+                                onValueChange = { newPin = it.filter(Char::isDigit).take(6) },
+                                label = { Text("Yeni Admin PIN") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Button(onClick = { if (newPin.length >= 4) { onUpdatePin(newPin); newPin = "" } }, modifier = Modifier.fillMaxWidth()) {
+                                Text("PIN Guncelle")
+                            }
+                        }
+                    }
+
+                    // Right Column
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        AdminSection("Hizli Baslat Slotlari") {
+                            val apps = getInstalledApps()
+                            slotLabels.forEachIndexed { index, config ->
+                                QuickLaunchEditor(
+                                    config = config,
+                                    apps = apps,
+                                    onChanged = { updated ->
+                                        slotLabels[index] = updated
+                                        onUpdateQuickLaunch(updated.slot, updated.label, updated.packageName)
+                                    }
+                                )
+                                if (index < slotLabels.size - 1) Spacer(Modifier.height(8.dp))
+                            }
+                        }
+
+                        AdminSection("Yeni Alarm") {
+                            OutlinedTextField(value = alarmTitle, onValueChange = { alarmTitle = it }, label = { Text("Alarm Basligi") }, modifier = Modifier.fillMaxWidth())
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                OutlinedTextField(value = alarmHour, onValueChange = { alarmHour = it.filter(Char::isDigit).take(2) }, label = { Text("Saat") }, modifier = Modifier.weight(1f))
+                                OutlinedTextField(value = alarmMinute, onValueChange = { alarmMinute = it.filter(Char::isDigit).take(2) }, label = { Text("Dakika") }, modifier = Modifier.weight(1f))
+                            }
+                            AdminToggle("Her Gun Tekrarla", repeatDaily) { repeatDaily = it }
+                            Button(
+                                onClick = {
+                                    val hour = alarmHour.toIntOrNull()
+                                    val minute = alarmMinute.toIntOrNull()
+                                    if (alarmTitle.isNotBlank() && hour != null && minute != null && hour in 0..23 && minute in 0..59) {
+                                        onAddAlarm(alarmTitle, hour, minute, repeatDaily)
+                                        alarmTitle = ""
+                                        alarmHour = ""
+                                        alarmMinute = ""
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Alarm Ekle")
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -535,28 +681,112 @@ private fun AdminPanel(
 }
 
 @Composable
-private fun QuickLaunchEditor(config: QuickLaunchConfig, onChanged: (QuickLaunchConfig) -> Unit) {
-    var label by remember(config.label) { mutableStateOf(config.label) }
-    var packageName by remember(config.packageName) { mutableStateOf(config.packageName) }
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(
-            value = label,
-            onValueChange = {
-                label = it
-                onChanged(config.copy(label = it, packageName = packageName))
-            },
-            label = { Text("Etiket ${config.slot + 1}") },
-            modifier = Modifier.weight(1f)
-        )
-        OutlinedTextField(
-            value = packageName,
-            onValueChange = {
-                packageName = it
-                onChanged(config.copy(label = label, packageName = it))
-            },
-            label = { Text("Paket adi") },
-            modifier = Modifier.weight(1.4f)
-        )
+private fun AdminSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(title, fontWeight = FontWeight.Bold, color = AccentSky, fontSize = 18.sp)
+        Surface(
+            color = SurfacePrimary.copy(alpha = 0.4f),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        }
+    }
+}
+
+@Composable
+private fun AdminToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun QuickLaunchEditor(config: QuickLaunchConfig, apps: List<AppInfo>, onChanged: (QuickLaunchConfig) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = config.label,
+                onValueChange = { onChanged(config.copy(label = it)) },
+                label = { Text("Slot ${config.slot + 1} Etiketi") },
+                modifier = Modifier.weight(1f)
+            )
+            Box(modifier = Modifier.weight(1.4f)) {
+                OutlinedTextField(
+                    value = config.packageName,
+                    onValueChange = { onChanged(config.copy(packageName = it)) },
+                    label = { Text("Paket Adi") },
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { expanded = true }) {
+                            Icon(Icons.AutoMirrored.Rounded.List, contentDescription = "Uygulama Sec")
+                        }
+                    }
+                )
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    apps.forEach { app ->
+                        DropdownMenuItem(
+                            text = { 
+                                Column {
+                                    Text(app.label)
+                                    Text(app.packageName, fontSize = 11.sp, color = TextMuted)
+                                }
+                            },
+                            onClick = {
+                                onChanged(config.copy(label = app.label, packageName = app.packageName))
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AllAppsDialog(apps: List<AppInfo>, onLaunchApp: (String) -> Unit, onClose: () -> Unit) {
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Tum Uygulamalar", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    IconButton(onClick = onClose) {
+                        Icon(Icons.Rounded.Close, contentDescription = "Kapat", modifier = Modifier.size(32.dp))
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(160.dp),
+                    contentPadding = PaddingValues(bottom = 32.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(apps) { app ->
+                        Surface(
+                            onClick = { onLaunchApp(app.packageName) },
+                            color = SurfaceSecondary,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.height(100.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(app.label, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(app.packageName, fontSize = 10.sp, color = TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -564,7 +794,7 @@ private fun QuickLaunchEditor(config: QuickLaunchConfig, onChanged: (QuickLaunch
 private fun PanelCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = SurfacePrimary.copy(alpha = 0.92f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)),
         shape = RoundedCornerShape(28.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
@@ -612,10 +842,10 @@ private fun Pill(text: String, color: Color) {
 }
 
 @Composable
-private fun MediaAction(icon: ImageVector, onClick: () -> Unit) {
+private fun MediaAction(icon: ImageVector, description: String, onClick: () -> Unit) {
     Surface(color = SurfaceSecondary, shape = CircleShape) {
         IconButton(onClick = onClick) {
-            Icon(icon, contentDescription = null)
+            Icon(icon, contentDescription = description)
         }
     }
 }
