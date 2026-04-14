@@ -165,7 +165,7 @@ fun DashboardRoute(
             ) {
                 StatusStrip(panelState)
                 MediaCard(panelState, onPlayPauseMedia, onMediaPrevious, onMediaNext, onLaunchAssistant)
-                QuickLaunchCard(panelState.quickLaunchItems, onLaunchApp, onOpenAllApps = { allAppsVisible = true })
+                QuickLaunchCard(panelState.quickLaunchItems.filter { it.packageName.isNotBlank() }, onLaunchApp, onOpenAllApps = { allAppsVisible = true })
                 AlarmCard(panelState, onToggleAlarm)
                 SystemCard(panelState)
                 Spacer(modifier = Modifier.height(8.dp))
