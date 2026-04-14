@@ -431,26 +431,30 @@ private fun QuickLaunchCard(items: List<QuickLaunchItem>, onLaunchApp: (String) 
                     Text("ALL APPS")
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items.forEach { item ->
-                    Surface(
-                        color = item.color.copy(alpha = 0.18f),
-                        shape = RoundedCornerShape(18.dp),
-                        modifier = Modifier
-                            .border(1.dp, item.color.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
-                            .clickable(enabled = item.installed) { onLaunchApp(item.packageName) }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            if (items.isEmpty()) {
+                Text("No slots configured.", color = TextMuted)
+            } else {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items.forEach { item ->
+                        Surface(
+                            color = item.color.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier
+                                .border(1.dp, item.color.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
+                                .clickable(enabled = item.installed) { onLaunchApp(item.packageName) }
                         ) {
-                            if (item.installed) {
-                                AppIcon(item.packageName, modifier = Modifier.size(32.dp))
-                            }
-                            Column {
-                                Text(item.label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
-                                Text(if (item.installed) item.packageName else "No app", color = TextMuted, fontSize = 12.sp)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                if (item.installed) {
+                                    AppIcon(item.packageName, modifier = Modifier.size(32.dp))
+                                }
+                                Column {
+                                    Text(item.label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                                    Text(if (item.installed) item.packageName else "No app", color = TextMuted, fontSize = 12.sp)
+                                }
                             }
                         }
                     }
