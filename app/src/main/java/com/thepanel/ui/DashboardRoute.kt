@@ -594,9 +594,9 @@ private fun AdminPanel(
                     // Left Column
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         AdminSection("Genel Ayarlar") {
-                            AdminToggle("Kiosk Modu", settings.kioskMode, onToggleKiosk)
-                            AdminToggle("Acik Tema", settings.useLightTheme, onToggleLightTheme)
-                            AdminToggle("Offline Hava Durumu", settings.useOfflineWeatherCache, onToggleOfflineWeather)
+                            AdminToggle("Kiosk Modu", settings.kioskMode) { onToggleKiosk() }
+                            AdminToggle("Acik Tema", settings.useLightTheme) { onToggleLightTheme() }
+                            AdminToggle("Offline Hava Durumu", settings.useOfflineWeatherCache) { onToggleOfflineWeather() }
                             
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 OutlinedTextField(
