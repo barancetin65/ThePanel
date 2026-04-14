@@ -723,6 +723,7 @@ private fun QuickLaunchEditor(config: QuickLaunchConfig, apps: List<AppInfo>, on
     
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(config.packageName, modifier = Modifier.size(44.dp))
             OutlinedTextField(
                 value = config.label,
                 onValueChange = { onChanged(config.copy(label = it)) },
@@ -744,6 +745,9 @@ private fun QuickLaunchEditor(config: QuickLaunchConfig, apps: List<AppInfo>, on
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     apps.forEach { app ->
                         DropdownMenuItem(
+                            leadingIcon = {
+                                AppIcon(app.packageName, modifier = Modifier.size(32.dp))
+                            },
                             text = { 
                                 Column {
                                     Text(app.label)
