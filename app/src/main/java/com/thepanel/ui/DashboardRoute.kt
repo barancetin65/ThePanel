@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,7 +79,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +91,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.drawable.toBitmap
 import com.thepanel.data.model.AdminSettings
 import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.PanelState
@@ -436,9 +440,18 @@ private fun QuickLaunchCard(items: List<QuickLaunchItem>, onLaunchApp: (String) 
                             .border(1.dp, item.color.copy(alpha = 0.35f), RoundedCornerShape(18.dp))
                             .clickable(enabled = item.installed) { onLaunchApp(item.packageName) }
                     ) {
-                        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-                            Text(item.label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
-                            Text(if (item.installed) item.packageName else "No app", color = TextMuted, fontSize = 12.sp)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (item.installed) {
+                                AppIcon(item.packageName, modifier = Modifier.size(32.dp))
+                            }
+                            Column {
+                                Text(item.label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                                Text(if (item.installed) item.packageName else "No app", color = TextMuted, fontSize = 12.sp)
+                            }
                         }
                     }
                 }
@@ -778,10 +791,12 @@ private fun AllAppsDialog(apps: List<AppInfo>, onLaunchApp: (String) -> Unit, on
                             onClick = { onLaunchApp(app.packageName) },
                             color = SurfaceSecondary,
                             shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.height(100.dp)
+                            modifier = Modifier.height(110.dp)
                         ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(app.label, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                AppIcon(app.packageName, modifier = Modifier.size(40.dp))
+                                Spacer(Modifier.height(8.dp))
+                                Text(app.label, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(app.packageName, fontSize = 10.sp, color = TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
@@ -789,6 +804,23 @@ private fun AllAppsDialog(apps: List<AppInfo>, onLaunchApp: (String) -> Unit, on
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AppIcon(packageName: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val icon = remember(packageName) {
+        runCatching {
+            context.packageManager.getApplicationIcon(packageName)
+        }.getOrNull()
+    }
+    if (icon != null) {
+        Image(
+            bitmap = icon.toBitmap().asImageBitmap(),
+            contentDescription = null,
+            modifier = modifier
+        )
     }
 }
 

@@ -41,7 +41,7 @@ class AndroidLocationService(
             return@callbackFlow
         }
 
-        val geocoder = Geocoder(context, Locale.ENGLISH)
+        val geocoder = Geocoder(context, Locale.getDefault())
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation ?: return
@@ -64,14 +64,23 @@ class AndroidLocationService(
     }
 
     private suspend fun Location.toLocationState(geocoder: Geocoder): LocationState {
-        val address = runCatching {
-            geocoder.getFromLocation(latitude, longitude, 1)?.firstOrNull()
-        }.getOrNull()
+        val addresses = runCatching {
+            geocoder.getFromLocation(latitude, longitude, 3)
+        }.getOrNull() ?: emptyList()
+
+        val address = addresses.firstOrNull()
+
+        // Try to find the best district match from multiple address fields
+        // Priority: locality > subLocality > subAdminArea > adminArea
+        val district = address?.let { addr ->
+            addr.locality ?: addr.subLocality ?: addr.subAdminArea ?: addr.adminArea
+        }.orEmpty()
+
         return LocationState(
             available = true,
             country = address?.countryName.orEmpty(),
             province = address?.adminArea.orEmpty(),
-            district = address?.subAdminArea ?: address?.locality.orEmpty(),
+            district = district,
             latitude = formatCoordinate(latitude),
             longitude = formatCoordinate(longitude),
             speed = formatSpeedMps(speed),
