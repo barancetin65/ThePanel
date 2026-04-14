@@ -120,7 +120,7 @@ data class AdminSettings(
     val locationRefreshSeconds: Int = 5,
     val useOfflineWeatherCache: Boolean = true,
     val useLightTheme: Boolean = false,
-    val quickLaunchSlots: List<QuickLaunchConfig> = List(4) { index ->
+    val quickLaunchSlots: List<QuickLaunchConfig> = List(15) { index ->
         QuickLaunchConfig(slot = index, label = "", packageName = "")
     }
 )

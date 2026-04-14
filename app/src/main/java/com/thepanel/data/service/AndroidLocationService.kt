@@ -65,21 +65,29 @@ class AndroidLocationService(
 
     private suspend fun Location.toLocationState(geocoder: Geocoder): LocationState {
         val addresses = runCatching {
+            @Suppress("DEPRECATION")
             geocoder.getFromLocation(latitude, longitude, 3)
         }.getOrNull() ?: emptyList()
 
-        val address = addresses.firstOrNull()
+        // Pick the best match: prefer one with locality or subLocality
+        val address = addresses.find { it.locality != null }
+            ?: addresses.find { it.subLocality != null }
+            ?: addresses.firstOrNull()
 
-        // Try to find the best district match from multiple address fields
-        // Priority: locality > subLocality > subAdminArea > adminArea
+        // Fallback or secondary check: if best match is still missing district info, try others
         val district = address?.let { addr ->
+            addr.locality ?: addr.subLocality ?: addr.subAdminArea ?: addr.adminArea
+        } ?: addresses.firstOrNull()?.let { addr ->
             addr.locality ?: addr.subLocality ?: addr.subAdminArea ?: addr.adminArea
         }.orEmpty()
 
+        val province = address?.adminArea ?: addresses.firstOrNull()?.adminArea.orEmpty()
+        val country = address?.countryName ?: addresses.firstOrNull()?.countryName.orEmpty()
+
         return LocationState(
             available = true,
-            country = address?.countryName.orEmpty(),
-            province = address?.adminArea.orEmpty(),
+            country = country,
+            province = province,
             district = district,
             latitude = formatCoordinate(latitude),
             longitude = formatCoordinate(longitude),
@@ -87,7 +95,7 @@ class AndroidLocationService(
             heading = formatHeading(bearing),
             accuracy = formatAccuracy(accuracy),
             altitude = formatAltitude(if (hasAltitude()) altitude else null),
-            error = null
+            error = if (addresses.isEmpty()) "Geocoder returned no address" else null
         )
     }
 }

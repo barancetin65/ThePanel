@@ -56,14 +56,16 @@ class AdminSettingsStore(
     }
 
     private fun decodeSlots(raw: String?): List<QuickLaunchConfig> {
-        return runCatching {
+        val decoded = runCatching {
             if (raw.isNullOrBlank()) {
-                List(4) { index -> QuickLaunchConfig(index, "", "") }
+                emptyList<QuickLaunchConfig>()
             } else {
                 json.decodeFromString<List<QuickLaunchConfig>>(raw)
             }
-        }.getOrElse {
-            List(4) { index -> QuickLaunchConfig(index, "", "") }
+        }.getOrElse { emptyList() }
+
+        return List(15) { index ->
+            decoded.find { it.slot == index } ?: QuickLaunchConfig(index, "", "")
         }
     }
 
