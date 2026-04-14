@@ -27,14 +27,14 @@ data class ClockState(
 
 data class WeatherState(
     val available: Boolean = false,
-    val summary: String = "Veri bekleniyor",
+    val summary: String = "Waiting for data",
     val temperature: String = "--",
     val feelsLike: String = "",
     val wind: String = "",
     val humidity: String = "",
     val sunrise: String = "",
     val sunset: String = "",
-    val updatedAt: String = "HenÃ¼z senkron yok",
+    val updatedAt: String = "No sync yet",
     val offlineCached: Boolean = false,
     val error: String? = null,
     val accent: Color = AccentSky,
@@ -56,7 +56,7 @@ data class LocationState(
     val district: String = "",
     val latitude: String = "--",
     val longitude: String = "--",
-    val speed: String = "-- km/s",
+    val speed: String = "-- km/h",
     val heading: String = "",
     val accuracy: String = "",
     val altitude: String = "",
@@ -66,20 +66,20 @@ data class LocationState(
 data class BatteryState(
     val level: Int = 0,
     val charging: Boolean = false,
-    val healthLabel: String = "Durum bekleniyor",
+    val healthLabel: String = "Waiting for status",
     val estimatedTime: String = ""
 )
 
 data class ConnectivityState(
     val online: Boolean = false,
-    val transport: String = "Ã‡evrimdÄ±ÅŸÄ±",
+    val transport: String = "Offline",
     val signalLabel: String = "",
     val lastSeenOnline: String = ""
 )
 
 data class MediaState(
     val available: Boolean = false,
-    val title: String = "Etkin medya yok",
+    val title: String = "No active media",
     val subtitle: String = "",
     val source: String = "",
     val playing: Boolean = false,

@@ -36,12 +36,12 @@ class AndroidLocationService(
     @SuppressLint("MissingPermission")
     override fun liveLocation(): Flow<LocationState> = callbackFlow {
         if (!hasLocationPermission()) {
-            trySend(LocationState(error = "Konum izni verilmedi"))
+            trySend(LocationState(error = "Location permission not granted"))
             close()
             return@callbackFlow
         }
 
-        val geocoder = Geocoder(context, Locale("tr"))
+        val geocoder = Geocoder(context, Locale.ENGLISH)
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation ?: return

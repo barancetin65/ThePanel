@@ -25,7 +25,7 @@ class AndroidSystemInfoService(
         val totalGb = stat.totalBytes / 1024 / 1024 / 1024
         val freeGb = stat.availableBytes / 1024 / 1024 / 1024
         val usedPercent = (((totalGb - freeGb).toFloat() / totalGb.coerceAtLeast(1)) * 100).toInt()
-        return "$totalGb GB / %$usedPercent dolu"
+        return "$totalGb GB / $usedPercent% used"
     }
 
     override fun permissionState(): PermissionState {

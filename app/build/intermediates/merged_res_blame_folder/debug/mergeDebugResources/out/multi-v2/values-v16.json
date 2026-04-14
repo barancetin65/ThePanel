@@ -4,7 +4,7 @@
             "outputFile": "com.thepanel.app-mergeDebugResources-78:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\baran\\.gradle\\caches\\transforms-4\\c9efb07e355a6260d0fdd135744fbf2d\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
+                    "source": "/home/engine/.gradle/caches/transforms-4/c9efb07e355a6260d0fdd135744fbf2d/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

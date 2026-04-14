@@ -27,7 +27,7 @@ class AndroidBatteryService(
                     BatteryState(
                         level = percent,
                         charging = charging,
-                        healthLabel = if (charging) "Åžarj oluyor" else "Batarya kullanÄ±lÄ±yor",
+                        healthLabel = if (charging) "Charging" else "On battery",
                         estimatedTime = ""
                     )
                 )
