@@ -91,16 +91,16 @@ class AndroidMediaControlService(
         if (!notificationAccessEnabled()) {
             return MediaState(
                 permissionRequired = true,
-                title = "Bildirim eriÅŸimi gerekli",
-                subtitle = "Spotify / YouTube kontrolÃ¼ iÃ§in eriÅŸim verin"
+                title = "Notification access required",
+                subtitle = "Grant access for Spotify / YouTube control"
             )
         }
-        val controller = currentController() ?: return MediaState(title = "Etkin medya yok")
+        val controller = currentController() ?: return MediaState(title = "No active media")
         val metadata = controller.metadata
         val playbackState = controller.playbackState
         return MediaState(
             available = true,
-            title = metadata?.description?.title?.toString().orEmpty().ifBlank { "Bilinmeyen parÃ§a" },
+            title = metadata?.description?.title?.toString().orEmpty().ifBlank { "Unknown track" },
             subtitle = metadata?.description?.subtitle?.toString().orEmpty(),
             source = controller.packageName,
             playing = playbackState?.state == android.media.session.PlaybackState.STATE_PLAYING,

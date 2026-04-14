@@ -63,7 +63,7 @@ class OpenMeteoWeatherService(
             val url = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=7"
             val request = Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
-                check(response.isSuccessful) { "Hava verisi alÄ±namadÄ±: ${response.code}" }
+                check(response.isSuccessful) { "Weather data could not be retrieved: ${response.code}" }
                 val body = response.body?.string().orEmpty()
                 val json = JSONObject(body)
                 val current = json.getJSONObject("current")

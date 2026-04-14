@@ -8,9 +8,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale("tr"))
-private val dateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", Locale("tr"))
-private val dayFormatter = DateTimeFormatter.ofPattern("EEEE", Locale("tr"))
+private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH)
+private val dateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy EEEE", Locale.ENGLISH)
+private val dayFormatter = DateTimeFormatter.ofPattern("EEEE", Locale.ENGLISH)
 private val coordinateFormatter = DecimalFormat("0.000000")
 
 fun nowTimeLabel(zoneId: ZoneId): String = LocalDateTime.now(zoneId).format(timeFormatter)
@@ -25,13 +25,13 @@ fun formatDayOfWeek(isoDate: String): String {
 
 fun formatClockZone(zoneId: ZoneId): String = zoneId.id
 
-fun formatTemperature(valueCelsius: Double?): String = valueCelsius?.let { "${it.roundToInt()}Â°" } ?: "--"
+fun formatTemperature(valueCelsius: Double?): String = valueCelsius?.let { "${it.roundToInt()}°" } ?: "--"
 
-fun formatFeelsLike(valueCelsius: Double?): String = valueCelsius?.let { "Hissedilen ${it.roundToInt()}Â°" }.orEmpty()
+fun formatFeelsLike(valueCelsius: Double?): String = valueCelsius?.let { "Feels like ${it.roundToInt()}°" }.orEmpty()
 
-fun formatWind(kmh: Double?): String = kmh?.let { "RÃ¼zgar ${it.roundToInt()} km/s" }.orEmpty()
+fun formatWind(kmh: Double?): String = kmh?.let { "Wind ${it.roundToInt()} km/h" }.orEmpty()
 
-fun formatHumidity(percent: Int?): String = percent?.let { "Nem %$it" }.orEmpty()
+fun formatHumidity(percent: Int?): String = percent?.let { "Humidity %$it" }.orEmpty()
 
 fun formatIsoTime(iso: String?): String {
     if (iso.isNullOrBlank()) return ""
@@ -45,18 +45,18 @@ fun formatIsoTime(iso: String?): String {
 }
 
 fun formatUpdatedAt(epochMs: Long?): String {
-    if (epochMs == null || epochMs <= 0) return "HenÃ¼z senkron yok"
+    if (epochMs == null || epochMs <= 0) return "No sync yet"
     val dt = Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).format(timeFormatter)
-    return "Son gÃ¼ncelleme $dt"
+    return "Last update $dt"
 }
 
 fun formatCoordinate(value: Double?): String = value?.let { coordinateFormatter.format(it) } ?: "--"
 
-fun formatSpeedMps(value: Float?): String = value?.let { "${(it * 3.6f).roundToInt()} km/s" } ?: "-- km/s"
+fun formatSpeedMps(value: Float?): String = value?.let { "${(it * 3.6f).roundToInt()} km/h" } ?: "-- km/h"
 
-fun formatHeading(value: Float?): String = value?.let { "${it.roundToInt()}Â°" }.orEmpty()
+fun formatHeading(value: Float?): String = value?.let { "${it.roundToInt()}°" }.orEmpty()
 
-fun formatAccuracy(value: Float?): String = value?.let { "${it.roundToInt()} m doÄŸruluk" }.orEmpty()
+fun formatAccuracy(value: Float?): String = value?.let { "${it.roundToInt()} m accuracy" }.orEmpty()
 
 fun formatAltitude(value: Double?): String = value?.let { "${it.roundToInt()} m" }.orEmpty()
 

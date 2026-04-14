@@ -7,10 +7,10 @@ import android.widget.Toast
 
 class PanelDeviceAdminReceiver : DeviceAdminReceiver() {
     override fun onEnabled(context: Context, intent: Intent) {
-        Toast.makeText(context, "The Panel cihaz yoneticisi etkin", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "The Panel device administrator enabled", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDisabled(context: Context, intent: Intent) {
-        Toast.makeText(context, "The Panel cihaz yoneticisi kapatildi", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "The Panel device administrator disabled", Toast.LENGTH_SHORT).show()
     }
 }

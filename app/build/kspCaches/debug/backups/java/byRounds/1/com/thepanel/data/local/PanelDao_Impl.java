@@ -47,7 +47,7 @@ public final class PanelDao_Impl implements PanelDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `weather_cache` (`id`,`latitude`,`longitude`,`summary`,`temperatureC`,`feelsLikeC`,`windSpeedKmh`,`humidityPercent`,`sunriseIso`,`sunsetIso`,`fetchedAtEpochMs`,`weatherCode`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `weather_cache` (`id`,`latitude`,`longitude`,`summary`,`temperatureC`,`feelsLikeC`,`windSpeedKmh`,`humidityPercent`,`sunriseIso`,`sunsetIso`,`fetchedAtEpochMs`,`weatherCode`,`forecastJson`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -65,6 +65,7 @@ public final class PanelDao_Impl implements PanelDao {
         statement.bindString(10, entity.getSunsetIso());
         statement.bindLong(11, entity.getFetchedAtEpochMs());
         statement.bindLong(12, entity.getWeatherCode());
+        statement.bindString(13, entity.getForecastJson());
       }
     };
     this.__insertionAdapterOfAlarmEntity = new EntityInsertionAdapter<AlarmEntity>(__db) {
@@ -219,6 +220,7 @@ public final class PanelDao_Impl implements PanelDao {
           final int _cursorIndexOfSunsetIso = CursorUtil.getColumnIndexOrThrow(_cursor, "sunsetIso");
           final int _cursorIndexOfFetchedAtEpochMs = CursorUtil.getColumnIndexOrThrow(_cursor, "fetchedAtEpochMs");
           final int _cursorIndexOfWeatherCode = CursorUtil.getColumnIndexOrThrow(_cursor, "weatherCode");
+          final int _cursorIndexOfForecastJson = CursorUtil.getColumnIndexOrThrow(_cursor, "forecastJson");
           final WeatherCacheEntity _result;
           if (_cursor.moveToFirst()) {
             final int _tmpId;
@@ -245,7 +247,9 @@ public final class PanelDao_Impl implements PanelDao {
             _tmpFetchedAtEpochMs = _cursor.getLong(_cursorIndexOfFetchedAtEpochMs);
             final int _tmpWeatherCode;
             _tmpWeatherCode = _cursor.getInt(_cursorIndexOfWeatherCode);
-            _result = new WeatherCacheEntity(_tmpId,_tmpLatitude,_tmpLongitude,_tmpSummary,_tmpTemperatureC,_tmpFeelsLikeC,_tmpWindSpeedKmh,_tmpHumidityPercent,_tmpSunriseIso,_tmpSunsetIso,_tmpFetchedAtEpochMs,_tmpWeatherCode);
+            final String _tmpForecastJson;
+            _tmpForecastJson = _cursor.getString(_cursorIndexOfForecastJson);
+            _result = new WeatherCacheEntity(_tmpId,_tmpLatitude,_tmpLongitude,_tmpSummary,_tmpTemperatureC,_tmpFeelsLikeC,_tmpWindSpeedKmh,_tmpHumidityPercent,_tmpSunriseIso,_tmpSunsetIso,_tmpFetchedAtEpochMs,_tmpWeatherCode,_tmpForecastJson);
           } else {
             _result = null;
           }

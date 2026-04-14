@@ -35,9 +35,9 @@ public final class PanelDatabase_Impl extends PanelDatabase {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `alarms` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `repeatDaily` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `weather_cache` (`id` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `summary` TEXT NOT NULL, `temperatureC` REAL NOT NULL, `feelsLikeC` REAL NOT NULL, `windSpeedKmh` REAL NOT NULL, `humidityPercent` INTEGER NOT NULL, `sunriseIso` TEXT NOT NULL, `sunsetIso` TEXT NOT NULL, `fetchedAtEpochMs` INTEGER NOT NULL, `weatherCode` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `weather_cache` (`id` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `summary` TEXT NOT NULL, `temperatureC` REAL NOT NULL, `feelsLikeC` REAL NOT NULL, `windSpeedKmh` REAL NOT NULL, `humidityPercent` INTEGER NOT NULL, `sunriseIso` TEXT NOT NULL, `sunsetIso` TEXT NOT NULL, `fetchedAtEpochMs` INTEGER NOT NULL, `weatherCode` INTEGER NOT NULL, `forecastJson` TEXT NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '99bf4ce30878f7fc5da22819e6a84452')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f7a2739eed9b3a6b2c96e435955698a2')");
       }
 
       @Override
@@ -103,7 +103,7 @@ public final class PanelDatabase_Impl extends PanelDatabase {
                   + " Expected:\n" + _infoAlarms + "\n"
                   + " Found:\n" + _existingAlarms);
         }
-        final HashMap<String, TableInfo.Column> _columnsWeatherCache = new HashMap<String, TableInfo.Column>(12);
+        final HashMap<String, TableInfo.Column> _columnsWeatherCache = new HashMap<String, TableInfo.Column>(13);
         _columnsWeatherCache.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWeatherCache.put("latitude", new TableInfo.Column("latitude", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWeatherCache.put("longitude", new TableInfo.Column("longitude", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -116,6 +116,7 @@ public final class PanelDatabase_Impl extends PanelDatabase {
         _columnsWeatherCache.put("sunsetIso", new TableInfo.Column("sunsetIso", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWeatherCache.put("fetchedAtEpochMs", new TableInfo.Column("fetchedAtEpochMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWeatherCache.put("weatherCode", new TableInfo.Column("weatherCode", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsWeatherCache.put("forecastJson", new TableInfo.Column("forecastJson", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysWeatherCache = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesWeatherCache = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoWeatherCache = new TableInfo("weather_cache", _columnsWeatherCache, _foreignKeysWeatherCache, _indicesWeatherCache);
@@ -127,7 +128,7 @@ public final class PanelDatabase_Impl extends PanelDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "99bf4ce30878f7fc5da22819e6a84452", "3b46c0ffbb000d6196543f52b342665c");
+    }, "f7a2739eed9b3a6b2c96e435955698a2", "1e6a6403dc08c5706446e1b557b117da");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 if (!dpm.isAdminActive(adminComponent)) {
                     val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
                         putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
-                        putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "The Panel'in kiosk ozelliklerini yonetmesi icin cihaz yonetici izni gereklidir.")
+                        putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Device administrator permission is required for The Panel to manage kiosk features.")
                     }
                     adminLauncher.launch(intent)
                 }

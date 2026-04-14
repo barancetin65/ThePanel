@@ -82,13 +82,13 @@ class AlarmScheduler(
 
 class PanelAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val title = intent.getStringExtra("alarm_title").orEmpty().ifBlank { "Panel alarmi" }
+        val title = intent.getStringExtra("alarm_title").orEmpty().ifBlank { "Panel alarm" }
         ensureChannel(context)
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
-            .setContentText("Alarm zamani geldi")
+            .setContentText("Alarm time reached")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)

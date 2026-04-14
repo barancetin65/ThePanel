@@ -23,17 +23,17 @@ class AndroidConnectivityService(
             val caps = connectivityManager.getNetworkCapabilities(network)
             val online = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
             val transport = when {
-                caps == null -> "Cevrimdisi"
+                caps == null -> "Offline"
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "Wi-Fi"
-                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Mobil veri"
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Mobile data"
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "Ethernet"
-                else -> "Bagli"
+                else -> "Connected"
             }
-            val signal = if (online) "Internet erisimi var" else "Baglanti yok"
+            val signal = if (online) "Internet access" else "No connection"
             val lastSeen = if (online) {
-                "Aktif"
+                "Active"
             } else {
-                "Son cevrimici ${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm", Locale("tr")))}"
+                "Last online ${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH))}"
             }
             trySend(
                 ConnectivityState(

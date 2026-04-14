@@ -23,8 +23,8 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AdminSettings())
 
     val nextAlarmLabel: StateFlow<String> = panelState
-        .map { state -> state.alarms.firstOrNull { it.enabled }?.let { "${it.title} Â· ${it.time}" } ?: "Alarm yok" }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Alarm yok")
+        .map { state -> state.alarms.firstOrNull { it.enabled }?.let { "${it.title} · ${it.time}" } ?: "No alarm" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "No alarm")
 
     private var _cachedApps = emptyList<AppInfo>()
 

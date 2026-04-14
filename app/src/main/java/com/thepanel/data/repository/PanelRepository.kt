@@ -218,7 +218,7 @@ class PanelRepository(
             title = title,
             time = formatAlarmTime(hour, minute),
             enabled = enabled,
-            repeatLabel = if (repeatDaily) "Her gun" else "Tek sefer"
+            repeatLabel = if (repeatDaily) "Daily" else "Once"
         )
     }
 
@@ -231,7 +231,7 @@ class PanelRepository(
             }
             QuickLaunchItem(
                 slot = config.slot,
-                label = resolvedLabel.ifBlank { "Bos slot" },
+                label = resolvedLabel.ifBlank { "Empty slot" },
                 packageName = packageName,
                 installed = packageName.isNotBlank() && appLauncherService.isInstalled(packageName),
                 color = palette[config.slot % palette.size]
