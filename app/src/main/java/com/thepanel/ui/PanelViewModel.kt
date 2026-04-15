@@ -66,6 +66,30 @@ class PanelViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleLargeUiMode() {
+        viewModelScope.launch {
+            repository.updateSettings { it.copy(largeUiMode = !it.largeUiMode) }
+        }
+    }
+
+    fun toggleHighContrastMode() {
+        viewModelScope.launch {
+            repository.updateSettings { it.copy(highContrastMode = !it.highContrastMode) }
+        }
+    }
+
+    fun vehicleControl(action: String) {
+        // Implementation of vehicle control actions via intents
+        // Example: com.thepanel.ACTION_LOCK
+        viewModelScope.launch {
+            val intent = android.content.Intent("com.thepanel.VEHICLE_CONTROL").apply {
+                putExtra("action", action)
+                setPackage(getApplication<Application>().packageName)
+            }
+            getApplication<Application>().sendBroadcast(intent)
+        }
+    }
+
     fun updateQuickLaunch(slot: Int, label: String, packageName: String) {
         viewModelScope.launch {
             repository.updateSettings { settings ->

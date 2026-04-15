@@ -69,6 +69,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,8 +92,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.viewinterop.AndroidView
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 import com.thepanel.data.model.AdminSettings
 import com.thepanel.data.model.AppInfo
 import com.thepanel.data.model.PanelState
@@ -105,6 +109,8 @@ import com.thepanel.ui.theme.BackgroundStart
 import com.thepanel.ui.theme.SurfacePrimary
 import com.thepanel.ui.theme.SurfaceSecondary
 import com.thepanel.ui.theme.TextMuted
+
+val LocalSettings = compositionLocalOf { AdminSettings() }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -128,6 +134,9 @@ fun DashboardRoute(
     onAddAlarm: (String, Int, Int, Boolean) -> Unit,
     onToggleAlarm: (Long, Boolean) -> Unit,
     onToggleLightTheme: () -> Unit,
+    onToggleLargeUiMode: () -> Unit,
+    onToggleHighContrastMode: () -> Unit,
+    onVehicleControl: (String) -> Unit,
     getInstalledApps: () -> List<AppInfo>
 ) {
     var adminSheetVisible by remember { mutableStateOf(false) }
@@ -139,12 +148,13 @@ fun DashboardRoute(
     val bgStart = if (settings.useLightTheme) Color(0xFFE3F2FD) else BackgroundStart
     val bgEnd = if (settings.useLightTheme) Color(0xFFBBDEFB) else BackgroundEnd
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.linearGradient(listOf(bgStart, bgEnd)))
-            .padding(16.dp)
-    ) {
+    CompositionLocalProvider(LocalSettings provides settings) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.linearGradient(listOf(bgStart, bgEnd)))
+                .padding(16.dp)
+        ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -155,6 +165,7 @@ fun DashboardRoute(
             ) {
                 HeroClockCard(panelState, nextAlarm)
                 WeatherCard(panelState, onRefreshWeather)
+                MapCard(panelState)
                 LocationCard(panelState)
                 PermissionsCard(panelState)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -166,6 +177,8 @@ fun DashboardRoute(
                 StatusStrip(panelState)
                 MediaCard(panelState, onPlayPauseMedia, onMediaPrevious, onMediaNext, onLaunchAssistant)
                 QuickLaunchCard(panelState.quickLaunchItems.filter { it.packageName.isNotBlank() }, onLaunchApp, onOpenAllApps = { allAppsVisible = true })
+                CampgroundCard(panelState)
+                BoondockingCard(panelState)
                 AlarmCard(panelState, onToggleAlarm)
                 SystemCard(panelState)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -210,6 +223,9 @@ fun DashboardRoute(
                 onUpdateQuickLaunch = onUpdateQuickLaunch,
                 onAddAlarm = onAddAlarm,
                 onToggleLightTheme = onToggleLightTheme,
+                onToggleLargeUiMode = onToggleLargeUiMode,
+                onToggleHighContrastMode = onToggleHighContrastMode,
+                onVehicleControl = onVehicleControl,
                 getInstalledApps = getInstalledApps
             )
         }
@@ -225,6 +241,7 @@ fun DashboardRoute(
             )
         }
     }
+}
 }
 
 @Composable
@@ -269,6 +286,12 @@ private fun WeatherCard(panelState: PanelState, onRefreshWeather: () -> Unit) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     CardTitle(Icons.Rounded.Cloud, "Weather")
                     Text(panelState.weather.temperature, fontSize = 54.sp, fontWeight = FontWeight.Bold)
+                    if (panelState.weather.windSpeedKmh > 40.0) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Rounded.Cloud, contentDescription = null, tint = AccentDanger, modifier = Modifier.size(20.dp))
+                            Text("WIND WARNING", color = AccentDanger, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
                     Text(panelState.weather.summary, fontSize = 22.sp)
                     if (panelState.weather.feelsLike.isNotBlank()) Text(panelState.weather.feelsLike, color = TextMuted)
                     Text(panelState.weather.updatedAt, color = TextMuted)
@@ -323,6 +346,12 @@ private fun LocationCard(panelState: PanelState) {
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(panelState.location.country.ifBlank { "No country info" }, color = TextMuted)
+                    if (panelState.location.altitude.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Rounded.Speed, contentDescription = null, tint = AccentSky, modifier = Modifier.size(18.dp))
+                            Text("Altitude: ${panelState.location.altitude}", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        }
+                    }
                     Text("Lat ${panelState.location.latitude} · Lon ${panelState.location.longitude}", color = TextMuted, fontSize = 14.sp)
                     panelState.location.error?.let { Text(it, color = AccentDanger) }
                 }
@@ -495,6 +524,74 @@ private fun AlarmCard(panelState: PanelState, onToggleAlarm: (Long, Boolean) -> 
 }
 
 @Composable
+private fun MapCard(panelState: PanelState) {
+    PanelCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CardTitle(Icons.Rounded.Map, "Offline Map")
+            val context = LocalContext.current
+            val latitude = panelState.location.latitude.toDoubleOrNull() ?: 0.0
+            val longitude = panelState.location.longitude.toDoubleOrNull() ?: 0.0
+            
+            AndroidView(
+                factory = { ctx ->
+                    MapView(ctx).apply {
+                        setTileSource(TileSourceFactory.MAPNIK)
+                        setMultiTouchControls(true)
+                        controller.setZoom(15.0)
+                        controller.setCenter(GeoPoint(latitude, longitude))
+                    }
+                },
+                update = { view ->
+                    view.controller.setCenter(GeoPoint(latitude, longitude))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
+        }
+    }
+}
+
+@Composable
+private fun CampgroundCard(panelState: PanelState) {
+    if (panelState.campgrounds.isEmpty()) return
+    PanelCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CardTitle(Icons.Rounded.Map, "Nearby Campgrounds")
+            panelState.campgrounds.take(3).forEach { camp ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(camp.name, fontWeight = FontWeight.SemiBold)
+                        if (camp.description.isNotBlank()) Text(camp.description, color = TextMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Text("📍", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoondockingCard(panelState: PanelState) {
+    if (panelState.boondockingSpots.isEmpty()) return
+    PanelCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CardTitle(Icons.Rounded.MyLocation, "Boondocking Finder")
+            panelState.boondockingSpots.take(3).forEach { spot ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(spot.name, fontWeight = FontWeight.SemiBold)
+                        if (spot.description.isNotBlank()) Text(spot.description, color = TextMuted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Text("🚐", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SystemCard(panelState: PanelState) {
     PanelCard {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -615,6 +712,8 @@ private fun AdminPanel(
                         AdminSection("General Settings") {
                             AdminToggle("Kiosk Mode", settings.kioskMode) { onToggleKiosk() }
                             AdminToggle("Light Theme", settings.useLightTheme) { onToggleLightTheme() }
+                            AdminToggle("Large UI Mode", settings.largeUiMode) { onToggleLargeUiMode() }
+                            AdminToggle("High Contrast Mode", settings.highContrastMode) { onToggleHighContrastMode() }
                             AdminToggle("Offline Weather", settings.useOfflineWeatherCache) { onToggleOfflineWeather() }
                             
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -636,6 +735,20 @@ private fun AdminPanel(
                                     label = { Text("Location Refresh (sec)") },
                                     modifier = Modifier.weight(1f)
                                 )
+                            }
+                        }
+
+                        AdminSection("Vehicle Controls") {
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(onClick = { onVehicleControl("LOCK") }, modifier = Modifier.weight(1f)) {
+                                    Text("Lock Doors")
+                                }
+                                Button(onClick = { onVehicleControl("LIGHTS") }, modifier = Modifier.weight(1f)) {
+                                    Text("Toggle Lights")
+                                }
+                            }
+                            Button(onClick = { onVehicleControl("HORN") }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Panic / Horn")
                             }
                         }
 
@@ -834,12 +947,14 @@ private fun AppIcon(packageName: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PanelCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    val settings = LocalSettings.current
+    val padding = if (settings.largeUiMode) 24.dp else 16.dp
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)),
         shape = RoundedCornerShape(28.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+        Column(modifier = Modifier.fillMaxWidth().padding(padding), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
     }
 }
 

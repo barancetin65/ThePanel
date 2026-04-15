@@ -28,6 +28,8 @@ class AdminSettingsStore(
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
                 useLightTheme = prefs[LIGHT_THEME] ?: false,
+                largeUiMode = prefs[LARGE_UI_MODE] ?: false,
+                highContrastMode = prefs[HIGH_CONTRAST_MODE] ?: false,
                 quickLaunchSlots = decodeSlots(prefs[QUICK_LAUNCH_SLOTS])
             )
         }
@@ -42,6 +44,8 @@ class AdminSettingsStore(
                 locationRefreshSeconds = prefs[LOCATION_REFRESH_SECONDS] ?: 5,
                 useOfflineWeatherCache = prefs[USE_OFFLINE_CACHE] ?: true,
                 useLightTheme = prefs[LIGHT_THEME] ?: false,
+                largeUiMode = prefs[LARGE_UI_MODE] ?: false,
+                highContrastMode = prefs[HIGH_CONTRAST_MODE] ?: false,
                 quickLaunchSlots = decodeSlots(prefs[QUICK_LAUNCH_SLOTS])
             )
             val updated = transform(current)
@@ -51,6 +55,8 @@ class AdminSettingsStore(
             prefs[LOCATION_REFRESH_SECONDS] = updated.locationRefreshSeconds
             prefs[USE_OFFLINE_CACHE] = updated.useOfflineWeatherCache
             prefs[LIGHT_THEME] = updated.useLightTheme
+            prefs[LARGE_UI_MODE] = updated.largeUiMode
+            prefs[HIGH_CONTRAST_MODE] = updated.highContrastMode
             prefs[QUICK_LAUNCH_SLOTS] = json.encodeToString(updated.quickLaunchSlots)
         }
     }
@@ -76,6 +82,8 @@ class AdminSettingsStore(
         val LOCATION_REFRESH_SECONDS = intPreferencesKey("location_refresh_seconds")
         val USE_OFFLINE_CACHE = booleanPreferencesKey("use_offline_cache")
         val LIGHT_THEME = booleanPreferencesKey("light_theme")
+        val LARGE_UI_MODE = booleanPreferencesKey("large_ui_mode")
+        val HIGH_CONTRAST_MODE = booleanPreferencesKey("high_contrast_mode")
         val QUICK_LAUNCH_SLOTS = stringPreferencesKey("quick_launch_slots")
     }
 }

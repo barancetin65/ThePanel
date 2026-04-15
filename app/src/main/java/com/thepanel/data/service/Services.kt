@@ -15,6 +15,11 @@ interface WeatherService {
     suspend fun refreshForecast(latitude: Double, longitude: Double): Result<Unit>
 }
 
+interface OsmOverpassService {
+    suspend fun findCampgrounds(latitude: Double, longitude: Double): Result<List<com.thepanel.data.model.Campground>>
+    suspend fun findBoondockingSpots(latitude: Double, longitude: Double): Result<List<com.thepanel.data.model.BoondockingSpot>>
+}
+
 interface LocationService {
     fun liveLocation(): Flow<LocationState>
 }

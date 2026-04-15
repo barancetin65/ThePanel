@@ -47,6 +47,7 @@ class OpenMeteoWeatherService(
                     temperature = formatTemperature(cache.temperatureC),
                     feelsLike = formatFeelsLike(cache.feelsLikeC),
                     wind = formatWind(cache.windSpeedKmh),
+                    windSpeedKmh = cache.windSpeedKmh,
                     humidity = formatHumidity(cache.humidityPercent),
                     sunrise = formatIsoTime(cache.sunriseIso),
                     sunset = formatIsoTime(cache.sunsetIso),
