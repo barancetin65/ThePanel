@@ -92,6 +92,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -628,6 +630,9 @@ private fun AdminPanel(
     onUpdateQuickLaunch: (Int, String, String) -> Unit,
     onAddAlarm: (String, Int, Int, Boolean) -> Unit,
     onToggleLightTheme: () -> Unit,
+    onToggleLargeUiMode: () -> Unit,
+    onToggleHighContrastMode: () -> Unit,
+    onVehicleControl: (String) -> Unit,
     getInstalledApps: () -> List<AppInfo>
 ) {
     var weatherRefresh by remember(settings.weatherRefreshMinutes) { mutableStateOf(settings.weatherRefreshMinutes.toString()) }

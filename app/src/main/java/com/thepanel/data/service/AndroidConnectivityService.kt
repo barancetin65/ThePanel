@@ -38,7 +38,7 @@ class AndroidConnectivityService(
             }
         }
 
-        fun emitCurrent() {
+        val emitCurrent = {
             val network = connectivityManager.activeNetwork
             val caps = connectivityManager.getNetworkCapabilities(network)
             val online = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
@@ -63,7 +63,7 @@ class AndroidConnectivityService(
             } else {
                 "Last online ${LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm", Locale.ENGLISH))}"
             }
-            trySend(
+            this@callbackFlow.trySend(
                 ConnectivityState(
                     online = online,
                     transport = transport,

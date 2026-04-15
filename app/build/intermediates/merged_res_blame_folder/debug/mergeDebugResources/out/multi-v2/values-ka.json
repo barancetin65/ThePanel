@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.thepanel.app-mergeDebugResources-78:/values-ka/values-ka.xml",
+            "outputFile": "com.thepanel.app-mergeDebugResources-79:/values-ka/values-ka.xml",
             "map": [
                 {
                     "source": "/home/engine/.gradle/caches/transforms-4/1f7053384530d73886794445a5ece2ae/transformed/material3-release/res/values-ka/values-ka.xml",

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.thepanel.app-mergeDebugResources-78:/values-sq/values-sq.xml",
+            "outputFile": "com.thepanel.app-mergeDebugResources-79:/values-sq/values-sq.xml",
             "map": [
                 {
                     "source": "/home/engine/.gradle/caches/transforms-4/867cef4e32b2ace537bdabce1016a4fe/transformed/play-services-base-18.5.0/res/values-sq/values.xml",
