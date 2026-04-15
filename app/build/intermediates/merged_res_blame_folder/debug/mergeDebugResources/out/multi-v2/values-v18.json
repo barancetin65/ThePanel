@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.thepanel.app-mergeDebugResources-78:/values-v18/values-v18.xml",
+            "outputFile": "com.thepanel.app-mergeDebugResources-79:/values-v18/values-v18.xml",
             "map": [
                 {
                     "source": "/home/engine/.gradle/caches/transforms-4/c9efb07e355a6260d0fdd135744fbf2d/transformed/appcompat-1.6.1/res/values-v18/values-v18.xml",

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.thepanel.app-mergeDebugResources-78:/values-es-rUS/values-es-rUS.xml",
+            "outputFile": "com.thepanel.app-mergeDebugResources-79:/values-es-rUS/values-es-rUS.xml",
             "map": [
                 {
                     "source": "/home/engine/.gradle/caches/transforms-4/4095bd638025dc0f3bef28ec62966276/transformed/core-1.13.1/res/values-es-rUS/values-es-rUS.xml",

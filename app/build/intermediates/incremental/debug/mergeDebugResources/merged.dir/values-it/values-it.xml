@@ -31,6 +31,8 @@
     <string msgid="8875138169939072951" name="abc_shareactionprovider_share_with">"Condividi con"</string>
     <string msgid="9055268688411532828" name="abc_shareactionprovider_share_with_application">"Condividi tramite <ns1:g id="APPLICATION_NAME">%s</ns1:g>"</string>
     <string msgid="1656852541809559762" name="abc_toolbar_collapse_description">"Comprimi"</string>
+    <string name="about">Info</string>
+    <string name="about_message">Questo software usa dati delle mappe forniti da OpenStreetMap.org</string>
     <string name="bottomsheet_action_collapse">Comprimi riquadro inferiore</string>
     <string name="bottomsheet_action_expand">Espandi riquadro inferiore</string>
     <string name="bottomsheet_action_expand_halfway">Espandi a metà</string>
@@ -66,12 +68,14 @@
     <string name="common_open_on_phone">Apri sul telefono</string>
     <string name="common_signin_button_text">Accedi</string>
     <string name="common_signin_button_text_long">Accedi con Google</string>
+    <string name="cyclemap">Mappa ciclistica</string>
     <string msgid="8038256446254964252" name="default_error_message">"Valore non valido"</string>
     <string msgid="6312721426453364202" name="default_popup_window_title">"Finestra popup"</string>
     <string msgid="1890207353314751437" name="dropdown_menu">"Menu a discesa"</string>
     <string name="error_a11y_label">Errore: non valido</string>
     <string name="error_icon_content_description">Errore</string>
     <string name="exposed_dropdown_menu_content_description">Mostra il menu a discesa</string>
+    <string name="hills">Rilievo</string>
     <string name="icon_content_description">Icona della finestra di dialogo</string>
     <string msgid="6827826412747255547" name="in_progress">"In corso"</string>
     <string msgid="7933458017204019916" name="indeterminate">"Elemento parzialmente selezionato"</string>
@@ -133,6 +137,7 @@
     <string msgid="6616362054113087709" name="m3c_time_picker_pm">"PM"</string>
     <string msgid="1805687647081129904" name="m3c_tooltip_long_press_label">"Mostra descrizione comando"</string>
     <string msgid="5460405025248574620" name="m3c_tooltip_pane_description">"Descrizione comando"</string>
+    <string name="map_mode">Tipo mappa</string>
     <string name="material_clock_toggle_content_description">Seleziona AM o PM</string>
     <string name="material_hour_24h_suffix">%1$s ore</string>
     <string name="material_hour_selection">Seleziona l\'ora</string>
@@ -191,6 +196,7 @@
     <string name="mtrl_picker_toggle_to_year_selection">Tocca per passare alla visualizzazione Anno</string>
     <string name="mtrl_timepicker_cancel">Annulla</string>
     <string name="mtrl_timepicker_confirm">OK</string>
+    <string name="my_location">La mia posizione</string>
     <string msgid="542007171693138492" name="navigation_menu">"Menu di navigazione"</string>
     <string msgid="6610465462668679431" name="not_selected">"Opzione non selezionata"</string>
     <string name="password_toggle_content_description">Mostra password</string>
@@ -210,4 +216,6 @@
     <string msgid="5946805113151406391" name="template_percent">"<ns1:g id="PERCENTAGE">%1$d</ns1:g> percento."</string>
     <string msgid="3765533235322692011" name="tooltip_description">"Descrizione comando"</string>
     <string msgid="3124740595719787496" name="tooltip_label">"Mostra descrizione comando"</string>
+    <string name="topo">Sentieri</string>
+    <string name="unknown">Sconosciuta</string>
 </resources>
