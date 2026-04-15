@@ -24,21 +24,7 @@ class AndroidConnectivityService(
     override fun connectivityState(): Flow<ConnectivityState> = callbackFlow {
         var currentSignalDbm = -120
 
-        val signalListener = object : PhoneStateListener() {
-            override fun onSignalStrengthsChanged(signalStrength: SignalStrength?) {
-                signalStrength?.let {
-                    // Try to get dbm, but level is easier to get consistently
-                    // level is 0..4
-                    val level = it.level 
-                    // Convert level to a rough dbm for display if needed, 
-                    // but we'll just use dbm field for level if that's easier or use it for label
-                    currentSignalDbm = -120 + (level * 20)
-                    emitCurrent()
-                }
-            }
-        }
-
-        val emitCurrent = {
+        fun emitCurrent() {
             val network = connectivityManager.activeNetwork
             val caps = connectivityManager.getNetworkCapabilities(network)
             val online = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
@@ -72,6 +58,16 @@ class AndroidConnectivityService(
                     lastSeenOnline = lastSeen
                 )
             )
+        }
+
+        val signalListener = object : PhoneStateListener() {
+            override fun onSignalStrengthsChanged(signalStrength: SignalStrength?) {
+                signalStrength?.let { strength ->
+                    val level = strength.level 
+                    currentSignalDbm = -120 + (level * 20)
+                    emitCurrent()
+                }
+            }
         }
 
         telephonyManager.listen(signalListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS)
