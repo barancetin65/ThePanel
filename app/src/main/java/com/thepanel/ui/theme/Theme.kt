@@ -35,9 +35,19 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun ThePanelTheme(
     useLightTheme: Boolean = false,
+    highContrastMode: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (useLightTheme) LightColorScheme else PanelColorScheme
+    var colorScheme = if (useLightTheme) LightColorScheme else PanelColorScheme
+    
+    if (highContrastMode) {
+        colorScheme = colorScheme.copy(
+            onSurface = if (useLightTheme) Color.Black else Color.White,
+            onBackground = if (useLightTheme) Color.Black else Color.White,
+            surface = if (useLightTheme) Color.White else Color.Black
+        )
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
         content = content

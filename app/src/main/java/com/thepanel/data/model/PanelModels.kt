@@ -16,7 +16,23 @@ data class PanelState(
     val alarms: List<AlarmItem> = emptyList(),
     val quickLaunchItems: List<QuickLaunchItem> = emptyList(),
     val system: SystemState = SystemState(),
-    val permissions: PermissionState = PermissionState()
+    val permissions: PermissionState = PermissionState(),
+    val campgrounds: List<Campground> = emptyList(),
+    val boondockingSpots: List<BoondockingSpot> = emptyList()
+)
+
+data class Campground(
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val description: String = ""
+)
+
+data class BoondockingSpot(
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val description: String = ""
 )
 
 data class ClockState(
@@ -31,6 +47,7 @@ data class WeatherState(
     val temperature: String = "--",
     val feelsLike: String = "",
     val wind: String = "",
+    val windSpeedKmh: Double = 0.0,
     val humidity: String = "",
     val sunrise: String = "",
     val sunset: String = "",
@@ -74,6 +91,7 @@ data class ConnectivityState(
     val online: Boolean = false,
     val transport: String = "Offline",
     val signalLabel: String = "",
+    val signalStrengthDbm: Int = 0,
     val lastSeenOnline: String = ""
 )
 
@@ -120,6 +138,8 @@ data class AdminSettings(
     val locationRefreshSeconds: Int = 5,
     val useOfflineWeatherCache: Boolean = true,
     val useLightTheme: Boolean = false,
+    val largeUiMode: Boolean = false,
+    val highContrastMode: Boolean = false,
     val quickLaunchSlots: List<QuickLaunchConfig> = List(15) { index ->
         QuickLaunchConfig(slot = index, label = "", packageName = "")
     }

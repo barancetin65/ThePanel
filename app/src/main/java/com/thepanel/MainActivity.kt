@@ -22,6 +22,13 @@ import com.thepanel.ui.theme.ThePanelTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // OSMDroid configuration
+        org.osmdroid.config.Configuration.getInstance().load(
+            applicationContext,
+            android.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        )
+        
         enableEdgeToEdge()
         setContent {
             val permissionLauncher = rememberLauncherForActivityResult(
@@ -37,6 +44,9 @@ class MainActivity : ComponentActivity() {
                 val permissions = buildList {
                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         add(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                        add(Manifest.permission.READ_PHONE_STATE)
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                         ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED

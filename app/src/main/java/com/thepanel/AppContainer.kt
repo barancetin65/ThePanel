@@ -10,6 +10,7 @@ import com.thepanel.data.service.AndroidConnectivityService
 import com.thepanel.data.service.AndroidKioskService
 import com.thepanel.data.service.AndroidLocationService
 import com.thepanel.data.service.AndroidMediaControlService
+import com.thepanel.data.service.AndroidOsmOverpassService
 import com.thepanel.data.service.AndroidSystemInfoService
 import com.thepanel.data.service.OpenMeteoWeatherService
 import com.thepanel.data.settings.AdminSettingsStore
@@ -30,6 +31,7 @@ class AppContainer(context: Context) {
         settingsStore = settingsStore,
         weatherService = OpenMeteoWeatherService(httpClient, dao),
         locationService = AndroidLocationService(appContext),
+        osmService = AndroidOsmOverpassService(httpClient),
         batteryService = AndroidBatteryService(appContext),
         connectivityService = AndroidConnectivityService(appContext),
         mediaControlService = AndroidMediaControlService(appContext),

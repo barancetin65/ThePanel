@@ -13,7 +13,10 @@ fun ThePanelApp(
     val settings by viewModel.settingsState.collectAsStateWithLifecycle()
     val nextAlarm by viewModel.nextAlarmLabel.collectAsStateWithLifecycle()
 
-    ThePanelTheme(useLightTheme = settings.useLightTheme) {
+    ThePanelTheme(
+        useLightTheme = settings.useLightTheme,
+        highContrastMode = settings.highContrastMode
+    ) {
         DashboardRoute(
             panelState = panelState,
             settings = settings,
@@ -34,6 +37,9 @@ fun ThePanelApp(
             onAddAlarm = viewModel::addAlarm,
             onToggleAlarm = viewModel::toggleAlarm,
             onToggleLightTheme = viewModel::toggleLightTheme,
+            onToggleLargeUiMode = viewModel::toggleLargeUiMode,
+            onToggleHighContrastMode = viewModel::toggleHighContrastMode,
+            onVehicleControl = viewModel::vehicleControl,
             getInstalledApps = viewModel::getInstalledApps
         )
     }

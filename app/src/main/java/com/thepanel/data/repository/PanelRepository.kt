@@ -19,6 +19,7 @@ import com.thepanel.data.service.ConnectivityService
 import com.thepanel.data.service.KioskService
 import com.thepanel.data.service.LocationService
 import com.thepanel.data.service.MediaControlService
+import com.thepanel.data.service.OsmOverpassService
 import com.thepanel.data.service.SystemInfoService
 import com.thepanel.data.service.WeatherService
 import com.thepanel.data.settings.AdminSettingsStore
@@ -45,6 +46,7 @@ class PanelRepository(
     private val settingsStore: AdminSettingsStore,
     private val weatherService: WeatherService,
     private val locationService: LocationService,
+    private val osmService: OsmOverpassService,
     private val batteryService: BatteryService,
     private val connectivityService: ConnectivityService,
     private val mediaControlService: MediaControlService,
@@ -57,7 +59,10 @@ class PanelRepository(
     private val zoneId = ZoneId.systemDefault()
     private val latestLocation = MutableStateFlow<LocationState?>(null)
     private val latestSettings = MutableStateFlow(AdminSettings())
+    private val campgrounds = MutableStateFlow<List<com.thepanel.data.model.Campground>>(emptyList())
+    private val boondockingSpots = MutableStateFlow<List<com.thepanel.data.model.BoondockingSpot>>(emptyList())
     private var lastWeatherRefreshAt: Long = 0L
+    private var lastOsmRefreshAt: Long = 0L
 
     init {
         scope.launch {
@@ -68,11 +73,23 @@ class PanelRepository(
                 latestLocation.value = location
                 val lat = location.latitude.toDoubleOrNull()
                 val lon = location.longitude.toDoubleOrNull()
-                val refreshIntervalMs = latestSettings.value.weatherRefreshMinutes.coerceAtLeast(5) * 60_000L
-                val shouldRefresh = System.currentTimeMillis() - lastWeatherRefreshAt >= refreshIntervalMs
-                if (lat != null && lon != null && shouldRefresh) {
-                    weatherService.refreshForecast(lat, lon)
-                    lastWeatherRefreshAt = System.currentTimeMillis()
+                if (lat != null && lon != null) {
+                    val refreshIntervalMs = latestSettings.value.weatherRefreshMinutes.coerceAtLeast(5) * 60_000L
+                    val shouldRefreshWeather = System.currentTimeMillis() - lastWeatherRefreshAt >= refreshIntervalMs
+                    if (shouldRefreshWeather) {
+                        weatherService.refreshForecast(lat, lon)
+                        lastWeatherRefreshAt = System.currentTimeMillis()
+                    }
+
+                    val osmRefreshIntervalMs = 30 * 60_000L // 30 minutes for OSM
+                    val shouldRefreshOsm = System.currentTimeMillis() - lastOsmRefreshAt >= osmRefreshIntervalMs
+                    if (shouldRefreshOsm) {
+                        launch {
+                            osmService.findCampgrounds(lat, lon).onSuccess { campgrounds.value = it }
+                            osmService.findBoondockingSpots(lat, lon).onSuccess { boondockingSpots.value = it }
+                        }
+                        lastOsmRefreshAt = System.currentTimeMillis()
+                    }
                 }
             }
         }
@@ -115,7 +132,13 @@ class PanelRepository(
             )
         }
 
-        return combine(liveState, dao.observeAlarms(), settingsStore.settings()) { live, alarms, settings ->
+        return combine(
+            liveState,
+            dao.observeAlarms(),
+            settingsStore.settings(),
+            campgrounds,
+            boondockingSpots
+        ) { live, alarms, settings, camps, boons ->
             PanelState(
                 clock = live.clock,
                 weather = live.weather,
@@ -132,7 +155,9 @@ class PanelRepository(
                     storageLabel = systemInfoService.storageLabel(),
                     notes = ""
                 ),
-                permissions = systemInfoService.permissionState()
+                permissions = systemInfoService.permissionState(),
+                campgrounds = camps,
+                boondockingSpots = boons
             )
         }
     }
