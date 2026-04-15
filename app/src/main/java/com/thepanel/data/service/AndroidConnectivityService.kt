@@ -77,9 +77,9 @@ class AndroidConnectivityService(
         telephonyManager.listen(signalListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS)
         
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) = emitCurrent()
-            override fun onLost(network: Network) = emitCurrent()
-            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) = emitCurrent()
+            override fun onAvailable(network: Network) { emitCurrent() }
+            override fun onLost(network: Network) { emitCurrent() }
+            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) { emitCurrent() }
         }
 
         emitCurrent()
